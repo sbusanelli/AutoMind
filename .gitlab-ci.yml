@@ -2,11 +2,12 @@ variables:
   SAST_IMAGE_SUFFIX: '-fips'
 
 stages:
+  - build
   - test
-  - sast:
-    stage: test
-    include:
-      - template: Security/SAST.gitlab-ci.yml
+  - deploy
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
 
 build-job:
   stage: build
@@ -16,15 +17,8 @@ build-job:
 testjob1:
   stage: test
   script: 
-    - echo "This job tests something"
+    - ./tests/run_tests.sh
 
-testjob2:
-  stage: test
-  script: 
-    - echo "This job tests something, but takes more time than test-job1." 
-    - echo "After the echo commands complete, it runs the sleep command for 20 seconds."
-    - echo "which simulates a test that runs seconds longer than test-job1."
-    - sleep 20
 
 deploy-prod:
   stage: deploy
