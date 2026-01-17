@@ -1,0 +1,115 @@
+# Dynamic Application Security Testing (DAST) Configuration
+# OWASP ZAP and security testing configuration
+
+target:
+  base_url: "http://localhost:5000"
+  frontend_url: "http://localhost:3000"
+  
+authentication:
+  login_endpoint: "/api/auth/login"
+  username: "test.user@example.com"
+  password: "TestPassword123!"
+  
+security_tests:
+  # Authentication Tests
+  auth_tests:
+    - name: "SQL Injection in Login"
+      endpoint: "/api/auth/login"
+      method: "POST"
+      payloads:
+        - email: "admin'--"
+        - password: "anything"
+      expected_status: 401
+      
+    - name: "XSS in Login"
+      endpoint: "/api/auth/login"
+      method: "POST"
+      payloads:
+        - email: "<script>alert('xss')</script>@example.com"
+        - password: "password"
+      expected_status: 401
+
+  # API Security Tests
+  api_tests:
+    - name: "SQL Injection in Jobs API"
+      endpoint: "/api/jobs"
+      method: "GET"
+      headers:
+        Authorization: "Bearer VALID_TOKEN"
+      payloads:
+        - id: "1' OR '1'='1"
+      expected_status: 400
+      
+    - name: "XSS in Job Creation"
+      endpoint: "/api/jobs"
+      method: "POST"
+      headers:
+        Authorization: "Bearer VALID_TOKEN"
+        Content-Type: "application/json"
+      payloads:
+        name: "<img src=x onerror=alert('xss')>"
+        description: "Test job"
+      expected_status: 400
+
+  # Rate Limiting Tests
+  rate_limit_tests:
+    - name: "Rate Limiting Bypass"
+      endpoint: "/api/auth/login"
+      method: "POST"
+      requests_per_second: 10
+      duration_seconds: 5
+      expected_behavior: "Should be rate limited after 100 requests"
+
+  # CORS Tests
+  cors_tests:
+    - name: "Cross-Origin Request"
+      endpoint: "/api/jobs"
+      method: "GET"
+      origin: "https://malicious-site.com"
+      expected_cors: "Should not allow malicious origin"
+
+scan_configuration:
+  tools:
+    - name: "OWASP ZAP"
+      enabled: true
+      config_file: "zap.conf"
+      spider_depth: 5
+      attack_strength: "HIGH"
+      
+    - name: "Burp Suite"
+      enabled: false
+      config_file: "burp.json"
+      
+    - name: "Nikto"
+      enabled: true
+      scan_type: "comprehensive"
+
+  vulnerability_scanners:
+    - name: "SQLMap"
+      enabled: true
+      target_endpoints:
+        - "/api/jobs"
+        - "/api/auth/login"
+        
+    - name: "XSSer"
+      enabled: true
+      target_forms:
+        - "/api/auth/login"
+        - "/api/jobs"
+
+reporting:
+  output_format: "json"
+  output_file: "security-scan-results.json"
+  include_false_positives: true
+  severity_levels: ["HIGH", "MEDIUM", "LOW"]
+  
+notification:
+  slack_webhook: "${SLACK_SECURITY_WEBHOOK}"
+  email_recipients:
+    - "security-team@example.com"
+    
+scheduling:
+  automated_scans: true
+  scan_frequency: "weekly"
+  scan_day: "sunday"
+  scan_time: "02:00"

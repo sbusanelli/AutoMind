@@ -1,0 +1,146 @@
+name: Security Scan Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Static Application Security Testing (SAST)
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run npm audit
+        run: |
+          cd backend
+          npm audit --audit-level=high --json > npm-audit.json || true
+
+      - name: Run Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: security/sast-config.yml
+          output: semgrep-report.json
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: typescript
+
+      - name: Autobuild CodeQL Database
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:typescript"
+
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-scan-results
+          path: |
+            npm-audit.json
+            semgrep-report.json
+            codeql-results/
+
+  # Dynamic Application Security Testing (DAST)
+  dast-scan:
+    runs-on: ubuntu-latest
+    needs: sast-scan
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup test environment
+        run: |
+          docker-compose -f infrastructure/docker/docker-compose.yml up -d
+          sleep 30
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          docker run --network scheduledbatch-network \
+            -v $PWD/security/dast-config.yml:/zap/wrk/config.yml \
+            owasp/zap2docker-stable \
+            zap.sh -t http://backend:5000 -J zap-results.json
+
+      - name: Run SQLMap Scan
+        run: |
+          docker run --network scheduledbatch-network \
+            sqlmapproject/sqlmap \
+            -u "http://backend:5000/api/jobs" \
+            --batch \
+            --json \
+            -o sqlmap-results
+
+      - name: Parse security results
+        run: |
+          node scripts/parse-security-results.js
+
+      - name: Security scan summary
+        run: |
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "### SAST Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Semgrep: $(cat security-summary.json | jq '.semgrep.vulnerabilities')" >> $GITHUB_STEP_SUMMARY
+          echo "- CodeQL: $(cat security-summary.json | jq '.codeql.vulnerabilities')" >> $GITHUB_STEP_SUMMARY
+          echo "- npm audit: $(cat security-summary.json | jq '.npmAudit.vulnerabilities')" >> $GITHUB_STEP_SUMMARY
+          echo "### DAST Results" >> $GITHUB_STEP_SUMMARY
+          echo "- ZAP: $(cat security-summary.json | jq '.zap.vulnerabilities')" >> $GITHUB_STEP_SUMMARY
+          echo "- SQLMap: $(cat security-summary.json | jq '.sqlmap.vulnerabilities')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload DAST results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: dast-results
+          path: |
+            zap-results.json
+            sqlmap-results/
+            security-summary.json
+
+      - name: Cleanup test environment
+        if: always()
+        run: |
+          docker-compose -f infrastructure/docker/docker-compose.yml down -v
+
+  # Security Policy Check
+  policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: ${{ github.ref }}
+
+      - name: Run Bandit Security Scan
+        run: |
+          pip install bandit[toml]
+          bandit -r backend/src -f json -o bandit-report.json
+
+      - name: Upload Bandit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bandit-results
+          path: bandit-report.json
