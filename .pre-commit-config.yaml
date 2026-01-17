@@ -1,0 +1,257 @@
+# FlowOps Pre-commit Configuration
+# Ensures code quality, security, and prevents hardcoded credentials
+
+repos:
+  # Security scanning for hardcoded credentials
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: 🔍 Detect Hardcoded Secrets
+        language: system
+        entry: detect-secrets --baseline .secrets.baseline
+        args: ['--baseline', '.secrets.baseline']
+        pass_filenames:
+          - '.*'
+        exclude: |
+          (?x)^(
+            \.git/.*|
+            \.secrets\.baseline|
+            \.env\.credentials|
+            node_modules/.*|
+            \.venv/.*|
+            \.env/.*
+          )$
+
+  # Gitleaks for advanced secret detection
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+        name: 🔍 Gitleaks Secret Detection
+        language: system
+        entry: gitleaks protect --baseline-path .gitleaks-baseline.json --verbose --redact
+        args: ['--baseline-path', '.gitleaks-baseline.json']
+        pass_filenames:
+          - '.*'
+        exclude: |
+          (?x)^(
+            \.git/.*|
+            \.gitleaks-baseline\.json|
+            \.env\.credentials|
+            node_modules/.*|
+            \.venv/.*
+          )$
+
+  # TruffleHog for comprehensive secret scanning
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.68.0
+    hooks:
+      - id: trufflehog
+        name: 🐽 TruffleHog Secret Scanning
+        language: system
+        entry: trufflehog filesystem --directory . --json --output-file trufflehog-results.json
+        args: ['--directory', '.', '--json', '--output-file', 'trufflehog-results.json']
+        pass_filenames:
+          - '.*'
+        exclude: |
+          (?x)^(
+            \.git/.*|
+            trufflehog-results\.json|
+            \.env\.credentials|
+            node_modules/.*
+          )$
+
+  # TypeScript/JavaScript linting with security rules
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        name: 🔧 ESLint Security Linting
+        types: [ts, tsx, js, jsx]
+        files: ^backend/src/
+        additional_dependencies:
+          - eslint
+          - '@typescript-eslint/eslint-plugin'
+          - eslint-plugin-security
+        args:
+          - --config
+          - backend/.eslintrc.js
+          - --max-warnings
+          - 0
+          - --plugin
+          - '@typescript-eslint'
+          - --plugin
+          - security
+
+  # Frontend linting
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        name: 🔧 Frontend ESLint
+        types: [ts, tsx, js, jsx]
+        files: ^frontend/src/
+        additional_dependencies:
+          - eslint
+          - '@typescript-eslint/eslint-plugin'
+        args:
+          - --config
+          - frontend/.eslintrc.js
+          - --max-warnings
+          - 0
+
+  # TypeScript type checking
+  - repo: https://github.com/digitalpulp/pre-commit-typescript
+    rev: v5.0.0
+    hooks:
+      - id: tsc
+        name: 📝 TypeScript Type Checking
+        types: [ts, tsx]
+        files: ^backend/src/
+        additional_dependencies:
+          - typescript
+        args:
+          - --noEmit
+          - --strict
+          - --skipLibCheck
+
+  # Frontend TypeScript checking
+  - repo: https://github.com/digitalpulp/pre-commit-typescript
+    rev: v5.0.0
+    hooks:
+      - id: tsc
+        name: 📝 Frontend TypeScript Check
+        types: [ts, tsx]
+        files: ^frontend/src/
+        additional_dependencies:
+          - typescript
+        args:
+          - --noEmit
+          - --strict
+          - --skipLibCheck
+
+  # Prettier formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        name: 🎨 Prettier Formatting
+        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
+        additional_dependencies:
+          - prettier
+        args:
+          - --config
+          - .prettierrc.js
+          - --check
+          - --no-error-on-unmatched-pattern
+
+  # Security audit for dependencies
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-node
+    rev: v1.0.1
+    hooks:
+      - id: npm-audit
+        name: 🔒 npm Audit Security Check
+        entry: npm audit --audit-level=high
+        language: system
+        files: package\.json
+        pass_filenames:
+          - package\.json
+        args: ['--audit-level', 'high']
+
+  # Check for hardcoded environment variables
+  - repo: local
+    hooks:
+      - id: check-hardcoded-env
+        name: 🚨 Check Hardcoded Environment Variables
+        entry: scripts/check-hardcoded-env.sh
+        language: script
+        files: \.(ts|tsx|js|jsx|json|yaml|yml)$
+        exclude: |
+          (?x)^(
+            \.git/.*|
+            node_modules/.*|
+            \.env\.credentials|
+            \.secrets\.baseline|
+            trufflehog-results\.json|
+            \.gitleaks-baseline\.json
+          )$
+
+  # Check for vault integration compliance
+  - repo: local
+    hooks:
+      - id: check-vault-compliance
+        name: 🔐 Check Vault Compliance
+        entry: scripts/check-vault-compliance.sh
+        language: script
+        files: \.(ts|tsx|js|jsx)$
+        exclude: |
+          (?x)^(
+            \.git/.*|
+            node_modules/.*|
+            test/.*|
+            \.env\.credentials
+          )$
+
+  # Check for API key usage patterns
+  - repo: local
+    hooks:
+      - id: check-api-key-patterns
+        name: 🔑 Check API Key Patterns
+        entry: scripts/check-api-key-patterns.sh
+        language: script
+        files: \.(ts|tsx|js|jsx|json|yaml|yml)$
+        exclude: |
+          (?x)^(
+            \.git/.*|
+            node_modules/.*|
+            \.env\.credentials|
+            test/.*|
+            docs/.*
+          )$
+
+  # Docker security scanning
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: 🐳 Docker Security Linting
+        entry: hadolint
+        language: system
+        files: ^infrastructure/docker/.*\.(dockerfile|Dockerfile)$
+        args:
+          - --failure-threshold
+          - warning
+          - --format
+          - plain
+          - --ignore
+          - DL3008
+          - --ignore
+          - DL3009
+
+  # YAML security scanning
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        name: 📄 YAML Security Linting
+        entry: yamllint
+        language: system
+        types: [yaml, yml]
+        args:
+          - --strict
+          - -d
+          - extends
+          - default
+          - rules
+          - '{line-length: {max: 120}, braces: {min-spaces-inside: 0}, brackets: {min-spaces-inside: 0}, indentation: {spaces: 2}, quoted-strings: {quote-type: single}}'
+
+# Pre-commit configuration
+default_language_version:
+  node: 18.17.0
+
+# Fail fast on first error
+fail_fast: true
+
+# Minimum pre-commit version
+minimum_pre_commit_version: 3.0.0
