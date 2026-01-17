@@ -1,6 +1,6 @@
-# ScheduledBatch - Modern Full-Stack Application
+# FlowOps - AI-Powered Workflow Operations
 
-A production-ready scheduled batch processing system built with modern architecture patterns and comprehensive security practices.
+A production-ready AI-powered workflow operations system built with modern full-stack architecture and comprehensive agentic AI capabilities.
 
 ## 🏗️ Architecture
 
@@ -32,12 +32,20 @@ A production-ready scheduled batch processing system built with modern architect
 ## 🚀 Features
 
 ### Core Functionality
-- **Scheduled Jobs**: Cron-based batch processing
-- **Job Management**: Create, monitor, and control batch jobs
-- **Real-time Updates**: WebSocket notifications for job status
-- **User Management**: Role-based access control
-- **Audit Logging**: Comprehensive activity tracking
-- **Error Handling**: Retry mechanisms and dead letter queues
+- **AI-Powered Job Optimization**: Intelligent job scheduling and resource allocation
+- **Predictive Analytics**: ML-based failure prediction and anomaly detection
+- **Natural Language Interface**: Chat with AI for workflow management
+- **Real-time Updates**: WebSocket notifications with AI insights
+- **Automated Performance Tuning**: AI-driven system optimization
+- **Smart Resource Management**: Dynamic resource allocation based on AI analysis
+
+### AI Capabilities
+- **Job Optimization**: AI analyzes job patterns and suggests optimal scheduling
+- **Failure Prediction**: ML models predict potential job failures before they occur
+- **Performance Insights**: Real-time AI analysis of system performance metrics
+- **Natural Language Queries**: Ask questions about your workflow in plain English
+- **Anomaly Detection**: AI identifies unusual patterns and potential issues
+- **Automated Remediation**: AI suggests and can automatically fix common issues
 
 ### Security Features
 - **Authentication**: JWT-based with refresh tokens
@@ -224,6 +232,17 @@ POST   /api/jobs
 GET    /api/jobs/:id
 PUT    /api/jobs/:id
 DELETE /api/jobs/:id
+```
+
+### AI Endpoints
+```
+POST   /api/ai/analyze/:jobId          # AI job optimization analysis
+GET    /api/ai/predict-failures        # AI failure prediction
+GET    /api/ai/performance-insights    # AI performance analysis
+POST   /api/ai/optimize-schedule      # AI schedule optimization
+GET    /api/ai/anomaly-alerts        # AI anomaly detection
+POST   /api/ai/explain-failure/:id    # AI failure explanation
+POST   /api/ai/chat                  # AI chat interface
 ```
 
 ## 🤝 Contributing
