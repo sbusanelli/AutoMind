@@ -1,0 +1,331 @@
+name: Multi-Cloud Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      cloud_provider:
+        description: 'Cloud provider'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - aws
+        - gcp
+        - azure
+
+env:
+  REGISTRY_AWS: ${{ secrets.AWS_REGISTRY }}
+  REGISTRY_GCP: ${{ secrets.GCP_REGISTRY }}
+  REGISTRY_AZURE: ${{ secrets.AZURE_REGISTRY }}
+  IMAGE_NAME: flowops
+
+jobs:
+  # Build and Test
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd backend && npm ci
+          cd ../frontend && npm ci
+
+      - name: Run tests
+        run: |
+          cd backend && npm test
+          cd ../frontend && npm test
+
+      - name: Build applications
+        run: |
+          cd backend && npm run build
+          cd ../frontend && npm run build
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_AWS }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY_GCP }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY_AZURE }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.multi
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # AWS Deployment
+  deploy-aws:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event.inputs.cloud_provider == 'all' || github.event.inputs.cloud_provider == 'aws' || github.event.inputs.cloud_provider == ''
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push to AWS ECR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.multi
+          push: true
+          tags: ${{ needs.build-and-test.outputs.image-tag }}
+          labels: ${{ needs.build-and-test.outputs.image-digest }}
+
+      - name: Deploy to AWS ECS
+        run: |
+          aws ecs update-service \
+            --cluster flowops-cluster \
+            --service flowops-service \
+            --force-new-deployment
+
+      - name: Update AWS CloudFormation
+        run: |
+          aws cloudformation deploy \
+            --template-file infrastructure/aws/cloudformation.yml \
+            --stack-name flowops-${{ github.event.inputs.environment || 'staging' }} \
+            --parameter-overrides Environment=${{ github.event.inputs.environment || 'staging' }}
+
+  # GCP Deployment
+  deploy-gcp:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event.inputs.cloud_provider == 'all' || github.event.inputs.cloud_provider == 'gcp' || github.event.inputs.cloud_provider == ''
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Configure Docker for GCP
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and push to GCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.multi
+          push: true
+          tags: ${{ needs.build-and-test.outputs.image-tag }}
+
+      - name: Deploy to GKE
+        run: |
+          gcloud container clusters get-credentials flowops-cluster --zone us-central1-a
+          kubectl set image deployment/flowops flowops=${{ needs.build-and-test.outputs.image-tag }}
+          kubectl rollout status deployment/flowops
+
+      - name: Update GCP Cloud Run
+        run: |
+          gcloud run deploy flowops \
+            --image ${{ needs.build-and-test.outputs.image-tag }} \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated
+
+  # Azure Deployment
+  deploy-azure:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event.inputs.cloud_provider == 'all' || github.event.inputs.cloud_provider == 'azure' || github.event.inputs.cloud_provider == ''
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ secrets.AZURE_REGISTRY_NAME }}
+
+      - name: Build and push to ACR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.multi
+          push: true
+          tags: ${{ needs.build-and-test.outputs.image-tag }}
+
+      - name: Deploy to Azure Container Instances
+        run: |
+          az container create \
+            --resource-group flowops-${{ github.event.inputs.environment || 'staging' }} \
+            --name flowops \
+            --image ${{ needs.build-and-test.outputs.image-tag }} \
+            --cpu 2 \
+            --memory 4 \
+            --ports 80 443
+
+      - name: Deploy to Azure Kubernetes Service
+        run: |
+          az aks get-credentials --resource-group flowops-rg --name flowops-cluster
+          kubectl set image deployment/flowops flowops=${{ needs.build-and-test.outputs.image-tag }}
+          kubectl rollout status deployment/flowops
+
+  # Multi-Cloud Health Check
+  health-check:
+    runs-on: ubuntu-latest
+    needs: [deploy-aws, deploy-gcp, deploy-azure]
+    if: always() && (needs.deploy-aws.result == 'success' || needs.deploy-gcp.result == 'success' || needs.deploy-azure.result == 'success')
+    steps:
+      - name: Health Check AWS
+        if: needs.deploy-aws.result == 'success'
+        run: |
+          curl -f https://flowops-${{ github.event.inputs.environment || 'staging' }}.us-west-2.elb.amazonaws.com/health || exit 1
+          echo "✅ AWS deployment healthy"
+
+      - name: Health Check GCP
+        if: needs.deploy-gcp.result == 'success'
+        run: |
+          curl -f https://flowops-${{ github.event.inputs.environment || 'staging' }}.uc.a.run.app/health || exit 1
+          echo "✅ GCP deployment healthy"
+
+      - name: Health Check Azure
+        if: needs.deploy-azure.result == 'success'
+        run: |
+          curl -f https://flowops-${{ github.event.inputs.environment || 'staging' }}.azurecontainer.io/health || exit 1
+          echo "✅ Azure deployment healthy"
+
+  # Multi-Cloud Monitoring Setup
+  setup-monitoring:
+    runs-on: ubuntu-latest
+    needs: [deploy-aws, deploy-gcp, deploy-azure]
+    if: always() && (needs.deploy-aws.result == 'success' || needs.deploy-gcp.result == 'success' || needs.deploy-azure.result == 'success')
+    steps:
+      - name: Setup Prometheus Monitoring
+        run: |
+          # Configure Prometheus to scrape all cloud deployments
+          cat << EOF > prometheus-multi-cloud.yml
+          global:
+            scrape_interval: 15s
+          scrape_configs:
+            - job_name: 'flowops-aws'
+              static_configs:
+                - targets: ['flowops-${{ github.event.inputs.environment || 'staging' }}.us-west-2.elb.amazonaws.com:80']
+            - job_name: 'flowops-gcp'
+              static_configs:
+                - targets: ['flowops-${{ github.event.inputs.environment || 'staging' }}.uc.a.run.app:443']
+            - job_name: 'flowops-azure'
+              static_configs:
+                - targets: ['flowops-${{ github.event.inputs.environment || 'staging' }}.azurecontainer.io:443']
+          EOF
+
+      - name: Setup Grafana Dashboards
+        run: |
+          # Create multi-cloud Grafana dashboard
+          cat << EOF > grafana-multi-cloud.json
+          {
+            "dashboard": {
+              "title": "FlowOps Multi-Cloud Monitoring",
+              "panels": [
+                {
+                  "title": "AWS Health",
+                  "type": "stat",
+                  "targets": [
+                    {
+                      "expr": "up{job=\"flowops-aws\"}"
+                    }
+                  ]
+                },
+                {
+                  "title": "GCP Health",
+                  "type": "stat",
+                  "targets": [
+                    {
+                      "expr": "up{job=\"flowops-gcp\"}"
+                    }
+                  ]
+                },
+                {
+                  "title": "Azure Health",
+                  "type": "stat",
+                  "targets": [
+                    {
+                      "expr": "up{job=\"flowops-azure\"}"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+          }
+          EOF
+
+  # Rollback on Failure
+  rollback:
+    runs-on: ubuntu-latest
+    needs: [deploy-aws, deploy-gcp, deploy-azure, health-check]
+    if: failure() && (needs.deploy-aws.result == 'success' || needs.deploy-gcp.result == 'success' || needs.deploy-azure.result == 'success')
+    steps:
+      - name: Rollback AWS
+        if: needs.deploy-aws.result == 'success'
+        run: |
+          aws ecs update-service \
+            --cluster flowops-cluster \
+            --service flowops-service \
+            --task-definition flowops-task-definition:$(aws ecs list-task-definitions --family flowops-task-definition --sort DESC --max-items 2 --query 'taskDefinitionArns[1]' --output text | awk -F'/' '{print $2}' | awk -F':' '{print $2}') \
+            --force-new-deployment
+
+      - name: Rollback GCP
+        if: needs.deploy-gcp.result == 'success'
+        run: |
+          gcloud container clusters get-credentials flowops-cluster --zone us-central1-a
+          kubectl rollout undo deployment/flowops
+
+      - name: Rollback Azure
+        if: needs.deploy-azure.result == 'success'
+        run: |
+          az aks get-credentials --resource-group flowops-rg --name flowops-cluster
+          kubectl rollout undo deployment/flowops
