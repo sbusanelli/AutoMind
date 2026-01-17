@@ -1,0 +1,228 @@
+<?xml version="1.0"?>
+<ruleset name="FlowOps_Custom_Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+
+    <description>
+        FlowOps custom PMD ruleset for code quality, security, and best practices
+    </description>
+
+    <!-- Security Rules -->
+    <rule ref="category/java/security.xml/HardCodedPassword"/>
+    <rule ref="category/java/security.xml/InsecureCrypto"/>
+    <rule ref="category/java/security.xml/NonSecureRandom"/>
+    <rule ref="category/java/security.xml/SqlInjection"/>
+    <rule ref="category/java/security.xml/XSS"/>
+    
+    <!-- Code Quality Rules -->
+    <rule ref="category/java/design.xml/TooManyMethods"/>
+    <rule ref="category/java/design.xml/CyclomaticComplexity"/>
+    <rule ref="category/java/design.xml/ExcessiveClassLength"/>
+    <rule ref="category/java/design.xml/ExcessiveMethodLength"/>
+    <rule ref="category/java/design.xml/ExcessiveParameterList"/>
+    
+    <!-- Performance Rules -->
+    <rule ref="category/java/performance.xml/AvoidInstantiatingObjectsInLoops"/>
+    <rule ref="category/java/performance.xml/InefficientStringConcatenation"/>
+    <rule ref="category/java/performance.xml/UseStringBufferForStringAppends"/>
+    
+    <!-- Best Practices -->
+    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
+    <rule ref="category/java/bestpractices.xml/UnusedFormalParameter"/>
+    <rule ref="category/java/bestpractices.xml/DuplicateImports"/>
+    <rule ref="category/java/bestpractices.xml/ImportFromSamePackage"/>
+    
+    <!-- Error Prone Rules -->
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyFinallyBlock"/>
+    <rule ref="category/java/errorprone.xml/EmptyIfStmt"/>
+    <rule ref="category/java/errorprone.xml/EmptyStatementNotInLoop"/>
+    <rule ref="category/java/errorprone.xml/MissingBreakInSwitch"/>
+    <rule ref="category/java/errorprone.xml/ReturnFromFinallyBlock"/>
+    
+    <!-- Custom Rules for FlowOps -->
+    <rule name="FlowOpsHardcodedCredentials"
+          language="java"
+          message="Avoid hardcoded credentials in FlowOps code"
+          class="net.sourceforge.pmd.lang.rule.XPathRule"
+          externalInfoUrl="https://docs.flowops.com/security/credentials">
+        <description>
+            Hardcoded credentials in FlowOps code is a security vulnerability.
+            All credentials should be loaded from vault or environment variables.
+        </description>
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    //StringLiteral[contains(@Image, 'password') or 
+                            contains(@Image, 'secret') or 
+                            contains(@Image, 'token') or 
+                            contains(@Image, 'key') or
+                            contains(@Image, 'AKIA') or
+                            contains(@Image, 'sk-') or
+                            contains(@Image, 'ghp_')]
+                ]]>
+                </value>
+            </property>
+        </properties>
+        <example>
+            <![CDATA[
+// Bad practice - hardcoded credentials
+String apiKey = "sk-1234567890abcdef";
+String password = "hardcoded-password";
+
+// Good practice - use vault or environment
+String apiKey = vaultService.getOpenAICredentials().apiKey;
+String password = System.getenv("DB_PASSWORD");
+            ]]>
+        </example>
+    </rule>
+
+    <rule name="FlowOpsVaultCompliance"
+          language="java"
+          message="Ensure vault compliance for credential management"
+          class="net.sourceforge.pmd.lang.rule.XPathRule"
+          externalInfoUrl="https://docs.flowops.com/security/vault">
+        <description>
+            FlowOps should use vault for credential management instead of direct environment access.
+            All credential access should go through the VaultService.
+        </description>
+        <priority>2</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    //MethodInvocation[MethodName/@Image = 'getenv' or 
+                                   MethodName/@Image = 'System.getenv']
+                ]]>
+                </value>
+            </property>
+        </properties>
+        <example>
+            <![CDATA[
+// Bad practice - direct environment access
+String token = System.getenv("GITHUB_TOKEN");
+
+// Good practice - use vault service
+String token = vaultService.getGitHubCredentials().token;
+            ]]>
+        </example>
+    </rule>
+
+    <rule name="FlowOpsErrorHandling"
+          language="java"
+          message="FlowOps should have proper error handling for vault operations"
+          class="net.sourceforge.pmd.lang.rule.XPathRule"
+          externalInfoUrl="https://docs.flowops.com/bestpractices/error-handling">
+        <description>
+            Vault operations should have proper error handling with logging and fallback mechanisms.
+        </description>
+        <priority>2</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    //MethodInvocation[MethodName/@Image = 'readSecret' or 
+                                   MethodName/@Image = 'getAWSCredentials' or
+                                   MethodName/@Image = 'getGCPCredentials']
+                    [not(following-sibling::TryStatement)]
+                ]]>
+                </value>
+            </property>
+        </properties>
+        <example>
+            <![CDATA[
+// Bad practice - no error handling
+String secret = vault.readSecret("path/to/secret");
+
+// Good practice - with error handling
+try {
+    String secret = vault.readSecret("path/to/secret");
+} catch (VaultException e) {
+    logger.error("Failed to read secret", e);
+    throw new CredentialException("Vault access failed", e);
+}
+            ]]>
+        </example>
+    </rule>
+
+    <rule name="FlowOpsLoggingSecurity"
+          language="java"
+          message="Avoid logging sensitive information in FlowOps"
+          class="net.sourceforge.pmd.lang.rule.XPathRule"
+          externalInfoUrl="https://docs.flowops.com/security/logging">
+        <description>
+            Never log sensitive information like credentials, tokens, or secrets.
+            Use structured logging with proper data masking.
+        </description>
+        <priority>1</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    //MethodInvocation[MethodName/@Image = 'info' or 
+                                   MethodName/@Image = 'debug' or 
+                                   MethodName/@Image = 'error']
+                    [following-sibling::Argument/PrimaryExpression/PrimaryPrefix[@Image = 'token' or 
+                                                                @Image = 'secret' or 
+                                                                @Image = 'password' or 
+                                                                @Image = 'key' or
+                                                                @Image = 'credential']]
+                ]]>
+                </value>
+            </property>
+        </properties>
+        <example>
+            <![CDATA[
+// Bad practice - logging sensitive data
+logger.info("Using token: " + token);
+logger.debug("Secret key: " + secretKey);
+
+// Good practice - masked logging
+logger.info("Using token: " + maskCredential(token));
+logger.debug("Authentication successful");
+            ]]>
+        </example>
+    </rule>
+
+    <rule name="FlowOpsResourceManagement"
+          language="java"
+          message="Ensure proper resource management in FlowOps"
+          class="net.sourceforge.pmd.lang.rule.XPathRule"
+          externalInfoUrl="https://docs.flowops.com/bestpractices/resource-management">
+        <description>
+            Resources should be properly managed with try-with-resources or finally blocks.
+            Vault connections and database connections should be closed properly.
+        </description>
+        <priority>2</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                    //AllocationExpression[Type/@Image = 'VaultService' or 
+                                          Type/@Image = 'Connection' or 
+                                          Type/@Image = 'InputStream' or 
+                                          Type/@Image = 'OutputStream']
+                    [not(following-sibling::TryStatement)]
+                ]]>
+                </value>
+            </property>
+        </properties>
+        <example>
+            <![CDATA[
+// Bad practice - resource not managed
+VaultService vault = new VaultService(config);
+String secret = vault.readSecret("path");
+
+// Good practice - with try-with-resources
+try (VaultService vault = new VaultService(config)) {
+    String secret = vault.readSecret("path");
+}
+            ]]>
+        </example>
+    </rule>
+
+</ruleset>

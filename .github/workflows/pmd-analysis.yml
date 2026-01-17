@@ -1,0 +1,201 @@
+name: PMD Code Quality Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pmd-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache PMD
+        uses: actions/cache@v3
+        with:
+          path: ~/.pmd
+          key: ${{ runner.os }}-pmd-${{ hashFiles('**/pmd-ruleset.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-pmd-
+
+      - name: Download PMD
+        run: |
+          if [ ! -f ~/.pmd/pmd-bin-6.55.0/bin/pmd ]; then
+            wget https://github.com/pmd/pmd/releases/download/pmd/6.55.0/pmd-bin-6.55.0.zip
+            unzip pmd-bin-6.55.0.zip -d ~/.pmd/
+            chmod +x ~/.pmd/pmd-bin-6.55.0/bin/pmd
+          fi
+
+      - name: Run PMD Analysis
+        run: |
+          ~/.pmd/pmd-bin-6.55.0/bin/pmd \
+            -d . \
+            -R pmd-ruleset.xml \
+            -f xml \
+            -r pmd-report.xml \
+            --exclude-patterns **/test/**,**/spec/**,**/node_modules/**,**/target/**,**/dist/**,**/build/** \
+            --fail-on-violation true
+
+      - name: Generate PMD Report
+        run: |
+          echo "## PMD Code Quality Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count violations by priority
+          HIGH_VIOLATIONS=$(xpath 'count(//violation[@priority="1"])' pmd-report.xml 2>/dev/null || echo "0")
+          MEDIUM_VIOLATIONS=$(xpath 'count(//violation[@priority="2"])' pmd-report.xml 2>/dev/null || echo "0")
+          LOW_VIOLATIONS=$(xpath 'count(//violation[@priority="3"])' pmd-report.xml 2>/dev/null || echo "0")
+          TOTAL_VIOLATIONS=$((HIGH_VIOLATIONS + MEDIUM_VIOLATIONS + LOW_VIOLATIONS))
+          
+          echo "### 📊 Violation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Priority | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔴 High | $HIGH_VIOLATIONS |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟡 Medium | $MEDIUM_VIOLATIONS |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟢 Low | $LOW_VIOLATIONS |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Total** | **$TOTAL_VIOLATIONS** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $TOTAL_VIOLATIONS -gt 0 ]; then
+            echo "### 🚨 PMD Violations Found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Show top violations
+            xpath '//violation[1]' pmd-report.xml 2>/dev/null | while read -r line; do
+              FILE=$(echo "$line" | xpath 'string(//violation/@file)' 2>/dev/null)
+              LINE=$(echo "$line" | xpath 'string(//violation/@beginline)' 2>/dev/null)
+              RULE=$(echo "$line" | xpath 'string(//violation/@rule)' 2>/dev/null)
+              PRIORITY=$(echo "$line" | xpath 'string(//violation/@priority)' 2>/dev/null)
+              MESSAGE=$(echo "$line" | xpath 'string(//violation/@message)' 2>/dev/null)
+              
+              PRIORITY_EMOJI="🔴"
+              if [ "$PRIORITY" = "2" ]; then
+                PRIORITY_EMOJI="🟡"
+              elif [ "$PRIORITY" = "3" ]; then
+                PRIORITY_EMOJI="🟢"
+              fi
+              
+              echo "- **$PRIORITY_EMOJI $FILE:$LINE** - $MESSAGE" >> $GITHUB_STEP_SUMMARY
+              echo "  - Rule: \`$RULE\`" >> $GITHUB_STEP_SUMMARY
+              echo "  - Priority: $PRIORITY" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "### ✅ No PMD Violations Found" >> $GITHUB_STEP_SUMMARY
+            echo "Code quality is excellent!" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Quality Metrics" >> $GITHUB_STEP_SUMMARY
+          
+          # Calculate quality score
+          if [ $TOTAL_VIOLATIONS -eq 0 ]; then
+            QUALITY_SCORE="100"
+          elif [ $TOTAL_VIOLATIONS -le 5 ]; then
+            QUALITY_SCORE="85"
+          elif [ $TOTAL_VIOLATIONS -le 10 ]; then
+            QUALITY_SCORE="70"
+          elif [ $TOTAL_VIOLATIONS -le 20 ]; then
+            QUALITY_SCORE="50"
+          else
+            QUALITY_SCORE="25"
+          fi
+          
+          echo "- **Quality Score**: $QUALITY_SCORE/100" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Analyzed**: $(find . -name "*.java" -not -path "./test/*" -not -path "./spec/*" -not -path "./node_modules/*" | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lines of Code**: $(find . -name "*.java" -not -path "./test/*" -not -path "./spec/*" -not -path "./node_modules/*" -exec wc -l {} + | tail -1 | awk '{print $1}')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload PMD Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: pmd-report
+          path: pmd-report.xml
+
+      - name: Comment PR with PMD Results
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('pmd-report.xml')) {
+              const report = fs.readFileSync('pmd-report.xml', 'utf8');
+              
+              // Parse PMD report and create comment
+              const violations = report.match(/<violation[^>]*>/g) || [];
+              
+              if (violations.length > 0) {
+                let comment = '## 🚨 PMD Code Quality Issues Found\n\n';
+                comment += `Found ${violations.length} PMD violations that need to be addressed:\n\n`;
+                
+                // Add top 10 violations
+                const violationMatches = report.match(/<violation[^>]*>.*?<\/violation>/gs) || [];
+                violationMatches.slice(0, 10).forEach((match, index) => {
+                  const file = match.match(/file="([^"]*)"/)?.[1] || 'unknown';
+                  const line = match.match(/beginline="([^"]*)"/)?.[1] || 'unknown';
+                  const rule = match.match(/rule="([^"]*)"/)?.[1] || 'unknown';
+                  const message = match.match(/message="([^"]*)"/)?.[1] || 'unknown';
+                  const priority = match.match(/priority="([^"]*)"/)?.[1] || 'unknown';
+                  
+                  const priorityEmoji = priority === '1' ? '🔴' : priority === '2' ? '🟡' : '🟢';
+                  
+                  comment += `${index + 1}. **${priorityEmoji} ${file}:${line}** - ${message}\n`;
+                  comment += `   - Rule: \`${rule}\`\n`;
+                  comment += `   - Priority: ${priority}\n\n`;
+                });
+                
+                if (violationMatches.length > 10) {
+                  comment += `... and ${violations.length - 10} more violations.\n\n`;
+                }
+                
+                comment += '### 🔧 How to Fix\n';
+                comment += '1. Review the PMD report for detailed information\n';
+                comment += '2. Address high-priority violations first\n';
+                comment += '3. Run PMD locally: `pmd -d . -R pmd-ruleset.xml`\`\n';
+                comment += '4. Check the [PMD documentation](https://pmd.github.io/latest/pmd_rules_java.html)\n\n';
+                
+                comment += '### 📊 Quality Score\n';
+                const score = Math.max(25, 100 - (violations.length * 5));
+                comment += `Current quality score: ${score}/100\n\n`;
+                
+                comment += '---\n';
+                comment += '*This comment was generated by [PMD Analysis](https://pmd.github.io/)*';
+                
+                // Create or update comment
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            }
+
+      - name: Check Quality Gate
+        run: |
+          HIGH_VIOLATIONS=$(xpath 'count(//violation[@priority="1"])' pmd-report.xml 2>/dev/null || echo "0")
+          TOTAL_VIOLATIONS=$(xpath 'count(//violation)' pmd-report.xml 2>/dev/null || echo "0")
+          
+          echo "High priority violations: $HIGH_VIOLATIONS"
+          echo "Total violations: $TOTAL_VIOLATIONS"
+          
+          # Fail if high priority violations exist
+          if [ $HIGH_VIOLATIONS -gt 0 ]; then
+            echo "❌ Quality gate failed: High priority violations detected"
+            exit 1
+          elif [ $TOTAL_VIOLATIONS -gt 20 ]; then
+            echo "⚠️ Quality gate warning: Too many violations detected"
+            exit 1
+          else
+            echo "✅ Quality gate passed"
+            exit 0
+          fi
