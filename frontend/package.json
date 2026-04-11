@@ -1,7 +1,7 @@
 {
-  "name": "scheduledbatch-frontend",
+  "name": "automind-frontend",
   "version": "1.0.0",
-  "description": "Modern React frontend for scheduled batch processing",
+  "description": "AutoMind Frontend - Autonomous AI operations system",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
@@ -36,6 +36,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "homepage": "https://github.com/sbusanelli/AutoMind#readme",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",

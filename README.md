@@ -1,14 +1,14 @@
-# FlowOps - AI-Powered Workflow Operations
+# AutoMind - Autonomous AI Operations
 
-> **The AI teammate that turns your operational data into actionable intelligence**
+> **The autonomous AI teammate that turns your operational data into actionable intelligence**
 
-FlowOps is an AI-powered workflow operations system that acts like a senior DevOps engineer working 24/7, but with AI-powered pattern recognition that humans can't match. Instead of just monitoring, FlowOps **understands, predicts, and optimizes** your entire workflow ecosystem.
+AutoMind is an AI-powered autonomous operations system that acts like a senior DevOps engineer working 24/7, but with AI-powered pattern recognition that humans can't match. Instead of just monitoring, AutoMind **understands, predicts, and optimizes** your entire workflow ecosystem.
 
-## 🎯 Why Developers Choose FlowOps
+## 🎯 Why Developers Choose AutoMind
 
 ### **Real-World Example: CI/CD Pipeline Management**
 
-**Before FlowOps (Traditional Approach):**
+**Before AutoMind (Traditional Approach):**
 ```bash
 # 30+ minutes of manual investigation
 kubectl get pods -n production
@@ -17,7 +17,7 @@ kubectl describe job build-1234
 grep "ERROR" /var/log/ci/*.log | tail -50
 ```
 
-**After FlowOps (AI-Powered):**
+**After AutoMind (AI-Powered):**
 ```typescript
 // 30 seconds to get insights
 const analysis = await FlowOpsAI.query(
@@ -124,8 +124,8 @@ Instead of complex queries and manual log analysis:
 
 ### **1. Installation**
 ```bash
-git clone https://github.com/sbusanelli/FlowOps
-cd FlowOps
+git clone https://github.com/sbusanelli/AutoMind
+cd AutoMind
 docker-compose up -d
 ```
 
@@ -157,7 +157,7 @@ docker-compose up -d
 ## 📁 Project Structure
 
 ```
-scheduledbatch/
+automind/
 ├── frontend/                    # React TypeScript application
 │   ├── src/
 │   │   ├── components/         # Reusable UI components

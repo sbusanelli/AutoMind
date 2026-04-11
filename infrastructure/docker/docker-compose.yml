@@ -4,9 +4,9 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: scheduledbatch-postgres
+    container_name: automind-postgres
     environment:
-      POSTGRES_DB: scheduledbatch
+      POSTGRES_DB: automind
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -16,7 +16,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - scheduledbatch-network
+      - automind-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -27,13 +27,13 @@ services:
   # Redis Cache and Queue
   redis:
     image: redis:7-alpine
-    container_name: scheduledbatch-redis
+    container_name: automind-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - scheduledbatch-network
+      - automind-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -67,7 +67,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - scheduledbatch-network
+      - automind-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
@@ -80,7 +80,7 @@ services:
     build:
       context: ../../
       dockerfile: infrastructure/docker/Dockerfile.frontend
-    container_name: scheduledbatch-frontend
+    container_name: automind-frontend
     environment:
       REACT_APP_API_URL: http://localhost:5000
       REACT_APP_WS_URL: http://localhost:5000
@@ -89,26 +89,26 @@ services:
     depends_on:
       - backend
     networks:
-      - scheduledbatch-network
+      - automind-network
     restart: unless-stopped
 
   # Prometheus Monitoring
   prometheus:
     image: prom/prometheus:latest
-    container_name: scheduledbatch-prometheus
+    container_name: automind-prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     networks:
-      - scheduledbatch-network
+      - automind-network
     restart: unless-stopped
 
   # Grafana Dashboard
   grafana:
     image: grafana/grafana:latest
-    container_name: scheduledbatch-grafana
+    container_name: automind-grafana
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
       GF_USERS_ALLOW_SIGN_UP: false
@@ -118,7 +118,7 @@ services:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
     networks:
-      - scheduledbatch-network
+      - automind-network
     restart: unless-stopped
 
 volumes:

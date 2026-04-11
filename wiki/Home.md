@@ -1,12 +1,12 @@
-# FlowOps - AI-Powered Workflow Operations
+# AutoMind - Autonomous AI Operations
 
-> **The AI teammate that turns your operational data into actionable intelligence**
+> **The autonomous AI teammate that turns your operational data into actionable intelligence**
 
 ## 🚀 Overview
 
-FlowOps is an AI-powered workflow operations system that acts like a senior DevOps engineer working 24/7, but with AI-powered pattern recognition that humans can't match. Instead of just monitoring, FlowOps **understands, predicts, and optimizes** your entire workflow ecosystem.
+AutoMind is an AI-powered autonomous operations system that acts like a senior DevOps engineer working 24/7, but with AI-powered pattern recognition that humans can't match. Instead of just monitoring, AutoMind **understands, predicts, and optimizes** your entire workflow ecosystem.
 
-## 🎯 Why Developers Choose FlowOps
+## 🎯 Why Developers Choose AutoMind
 
 ### **Real-World Example: CI/CD Pipeline Management**
 
@@ -18,9 +18,9 @@ kubectl describe job build-1234
 grep "ERROR" /var/log/ci/*.log | tail -50
 ```
 
-**FlowOps AI-Powered (30 seconds):**
+**AutoMind AI-Powered (30 seconds):**
 ```typescript
-const analysis = await FlowOpsAI.query(
+const analysis = await AutoMindAI.query(
   "Show me all failed CI builds from yesterday and tell me why they failed"
 );
 

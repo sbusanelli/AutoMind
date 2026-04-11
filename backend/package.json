@@ -1,7 +1,7 @@
 {
-  "name": "scheduledbatch-backend",
+  "name": "automind-backend",
   "version": "1.0.0",
-  "description": "Node.js backend for scheduled batch processing system",
+  "description": "AutoMind Backend - Autonomous AI operations system",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
