@@ -9,7 +9,7 @@ Content-Type: application/json
 
 {
   "email": "user@example.com",
-  "password": "password123"
+  "password": "your_secure_password_here"
 }
 ```
 
@@ -17,8 +17,8 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "token": "jwt_token_here",
-  "refreshToken": "refresh_token_here",
+  "token": "example_jwt_token_here",
+  "refreshToken": "example_refresh_token_here",
   "user": {
     "id": "user_id",
     "email": "user@example.com",
@@ -40,7 +40,7 @@ Content-Type: application/json
 ### Logout
 ```http
 POST /api/auth/logout
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 ```
 
 ## 📋 Job Management
@@ -48,7 +48,7 @@ Authorization: Bearer jwt_token_here
 ### Get All Jobs
 ```http
 GET /api/jobs
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 ```
 
 **Response:**
@@ -76,7 +76,7 @@ Authorization: Bearer jwt_token_here
 ### Create Job
 ```http
 POST /api/jobs
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 Content-Type: application/json
 
 {
@@ -94,13 +94,13 @@ Content-Type: application/json
 ### Get Specific Job
 ```http
 GET /api/jobs/:id
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 ```
 
 ### Update Job
 ```http
 PUT /api/jobs/:id
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 Content-Type: application/json
 
 {
@@ -112,7 +112,7 @@ Content-Type: application/json
 ### Delete Job
 ```http
 DELETE /api/jobs/:id
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 ```
 
 ## 🤖 AI Endpoints
@@ -120,7 +120,7 @@ Authorization: Bearer jwt_token_here
 ### Optimize Job
 ```http
 POST /api/ai/optimize
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 Content-Type: application/json
 
 {
@@ -152,7 +152,7 @@ Content-Type: application/json
 ### Analyze Performance
 ```http
 POST /api/ai/analyze
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 Content-Type: application/json
 
 {
@@ -186,7 +186,7 @@ Content-Type: application/json
 ### Natural Language Interface
 ```http
 POST /api/ai/chat
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 Content-Type: application/json
 
 {
@@ -230,7 +230,7 @@ Content-Type: application/json
 ### Get Dashboard Data
 ```http
 GET /api/analytics/dashboard
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 ```
 
 **Response:**
@@ -262,7 +262,7 @@ Authorization: Bearer jwt_token_here
 ### Get Performance Metrics
 ```http
 GET /api/analytics/performance?timeRange=7d&granularity=hour
-Authorization: Bearer jwt_token_here
+Authorization: Bearer your_jwt_token_here
 ```
 
 ## 🚨 Error Codes

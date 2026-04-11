@@ -16,8 +16,8 @@
 export NODE_ENV=production
 export DATABASE_URL=postgresql://prod_user:prod_pass@prod-db:5432/flowops
 export REDIS_URL=redis://prod-redis:6379
-export JWT_SECRET=your_production_jwt_secret
-export OPENAI_API_KEY=your_production_openai_key
+export JWT_SECRET=your_production_jwt_secret_here
+export OPENAI_API_KEY=your_production_openai_key_here
 ```
 
 #### 2. Database Migration
@@ -404,7 +404,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@flowops.com
+    email: admin@example.com
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:

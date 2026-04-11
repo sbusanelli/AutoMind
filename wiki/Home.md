@@ -107,14 +107,15 @@ flowops/
 Create `.env` file with:
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/flowops
+DATABASE_URL=postgresql://example_user:example_password@localhost:5432/example_database
 REDIS_URL=redis://localhost:6379
 
 # AI Services
-OPENAI_API_KEY=your_openai_key
+OPENAI_API_KEY=example_openai_api_key
 
 # Security
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=example_jwt_secret
+JWT_SECRET=your_jwt_secret_here
 ```
 
 ## 🚀 Production Deployment

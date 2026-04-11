@@ -360,7 +360,7 @@ echo "secrets/" >> .gitignore
 ### Database Security
 ```sql
 -- Create dedicated database user
-CREATE USER flowops_app WITH PASSWORD 'strong_password_here';
+CREATE USER flowops_app WITH PASSWORD 'your_strong_password_here';
 GRANT SELECT, INSERT, UPDATE, DELETE ON jobs TO flowops_app;
 GRANT SELECT ON job_logs TO flowops_app;
 
