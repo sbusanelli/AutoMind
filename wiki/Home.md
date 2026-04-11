@@ -130,8 +130,8 @@ flowops/
 
 1. **Clone Repository**
    ```bash
-   git clone https://github.com/sbusanelli/FlowOps
-   cd FlowOps
+   git clone https://github.com/sbusanelli/AutoMind
+   cd AutoMind
    ```
 
 2. **Backend Setup**
@@ -299,7 +299,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Additional Resources
 
-- [GitHub Repository](https://github.com/sbusanelli/FlowOps)
+- [GitHub Repository](https://github.com/sbusanelli/AutoMind)
 - [API Documentation](docs/api.md)
 - [Security Guidelines](docs/security.md)
 - [Deployment Guide](docs/deployment.md)

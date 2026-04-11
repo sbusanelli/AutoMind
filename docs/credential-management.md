@@ -383,7 +383,7 @@ tail -f ~/.flowops/logs/credential-manager.log
 
 ### **Contact Information**
 - **Documentation**: https://docs.flowops.com/credentials
-- **Issues**: https://github.com/sbusanelli/FlowOps/issues
+- **Issues**: https://github.com/sbusanelli/AutoMind/issues
 - **Security**: security@flowops.com
 - **Support**: support@flowops.com
 

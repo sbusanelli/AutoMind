@@ -353,9 +353,9 @@ When creating support requests, include:
 - **Configuration**: Environment variables and configuration files
 
 ### Contact Channels
-- **GitHub Issues**: [Create new issue](https://github.com/sbusanelli/FlowOps/issues)
-- **Documentation**: [Wiki](https://github.com/sbusanelli/FlowOps/wiki)
-- **API Reference**: [API Docs](https://github.com/sbusanelli/FlowOps/wiki/API-Reference)
+- **GitHub Issues**: [Create new issue](https://github.com/sbusanelli/AutoMind/issues)
+- **Documentation**: [Wiki](https://github.com/sbusanelli/AutoMind/wiki)
+- **API Reference**: [API Docs](https://github.com/sbusanelli/AutoMind/wiki/API-Reference)
 
 ---
 
