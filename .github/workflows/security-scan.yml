@@ -50,7 +50,7 @@ jobs:
           category: "/language:typescript"
 
       - name: Upload security artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-scan-results
@@ -105,7 +105,7 @@ jobs:
           echo "- SQLMap: $(cat security-summary.json | jq '.sqlmap.vulnerabilities')" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload DAST results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dast-results
@@ -139,7 +139,7 @@ jobs:
           bandit -r backend/src -f json -o bandit-report.json
 
       - name: Upload Bandit results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: bandit-results

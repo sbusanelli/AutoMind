@@ -114,7 +114,7 @@ jobs:
           echo "- **Lines of Code**: $(find . -name "*.java" -not -path "./test/*" -not -path "./spec/*" -not -path "./node_modules/*" -exec wc -l {} + | tail -1 | awk '{print $1}')" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload PMD Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: pmd-report
