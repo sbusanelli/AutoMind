@@ -55,8 +55,22 @@ This will update all diagram files in this directory.
 
 This project uses **[GitDiagram](https://gitdiagram.com/)** for visual repository analysis.
 
-- **Live View**: https://gitdiagram.com/github.com/sbusanelli/AutoMind
-- **Learn More**: https://gitdiagram.com/docs/
+### How to View Interactive Diagrams:
+1. Visit: https://gitdiagram.com
+2. Replace `github.com` with `gitdiagram.com` in this repo's GitHub URL
+3. Or search for "sbusanelli/AutoMind" at https://gitdiagram.com/browse
+
+**Note**: Repository diagrams are generated on-demand and may take a moment to load on first access.
+
+### Features:
+- ✅ Interactive file tree visualization
+- ✅ Dependency graphs
+- ✅ Code complexity metrics
+- ✅ Architecture overview
+- ✅ Shareable links
+- ✅ Export capabilities
+
+Learn more: [GitDiagram Integration Guide](./gitdiagram-reference.md)
 
 ## Related Documentation
 

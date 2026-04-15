@@ -4,16 +4,24 @@
 
 GitDiagram (https://gitdiagram.com/) provides visual repository analysis and architecture documentation.
 
-## Integration Points
+## How to Use GitDiagram with AutoMind
 
-### 1. Repository Analysis
-- **URL**: `https://gitdiagram.com/github.com/sbusanelli/AutoMind`
-- **Alternative**: Visit https://gitdiagram.com/ and search for "sbusanelli/AutoMind"
-- **Provides**: 
-  - File structure visualization
-  - Dependency graphs
-  - Code complexity metrics
-  - Architecture overview
+### Option 1: Quick Access (Recommended)
+1. Visit: https://gitdiagram.com
+2. In the URL bar, replace `github.com` with `gitdiagram.com` in any GitHub URL
+3. For this repo: Change `https://github.com/sbusanelli/AutoMind` to `https://gitdiagram.com/github.com/sbusanelli/AutoMind`
+
+### Option 2: Browse Repository Directory
+1. Visit: https://gitdiagram.com/browse
+2. Search for "AutoMind" or "sbusanelli"
+3. Click on the repository when it appears (may take time to be indexed)
+
+### Option 3: Manual Repository Entry
+1. Visit: https://gitdiagram.com
+2. Enter the repository path in the search box
+3. Press Enter to generate diagram
+
+## Integration Points
 
 ### 2. Automated Diagrams
 - Generate architecture diagrams
