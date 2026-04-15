@@ -98,7 +98,7 @@ Instead of complex queries and manual log analysis:
 - **[🔄 Development Workflow](./docs/diagrams/development-workflow.md)** - Local setup, feature development, testing strategy, and CI/CD pipeline
 - **[💾 Database Schema](./docs/diagrams/database-schema.md)** - Entity relationships and data structure
 - **[📁 Project Structure Guide](./docs/project-structure.md)** - Detailed breakdown of all directories and files
-- **[🌐 Live GitDiagram](https://gitdiagram.com/repo/sbusanelli/AutoMind)** - Interactive visual analysis on GitDiagram.com
+- **[🌐 Interactive GitDiagram](https://gitdiagram.com/github.com/sbusanelli/AutoMind)** - Interactive visual analysis on GitDiagram.com
 
 **For new developers:**
 1. Start with [Architecture Overview](./docs/diagrams/architecture-diagrams.md)

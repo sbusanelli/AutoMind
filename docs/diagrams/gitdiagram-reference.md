@@ -7,7 +7,8 @@ GitDiagram (https://gitdiagram.com/) provides visual repository analysis and arc
 ## Integration Points
 
 ### 1. Repository Analysis
-- **URL**: `https://gitdiagram.com/repo/sbusanelli/AutoMind`
+- **URL**: `https://gitdiagram.com/github.com/sbusanelli/AutoMind`
+- **Alternative**: Visit https://gitdiagram.com/ and search for "sbusanelli/AutoMind"
 - **Provides**: 
   - File structure visualization
   - Dependency graphs

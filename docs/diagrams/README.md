@@ -55,7 +55,7 @@ This will update all diagram files in this directory.
 
 This project uses **[GitDiagram](https://gitdiagram.com/)** for visual repository analysis.
 
-- **Live View**: https://gitdiagram.com/repo/sbusanelli/AutoMind
+- **Live View**: https://gitdiagram.com/github.com/sbusanelli/AutoMind
 - **Learn More**: https://gitdiagram.com/docs/
 
 ## Related Documentation
