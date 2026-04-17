@@ -100,6 +100,33 @@ Instead of complex queries and manual log analysis:
 - **[📁 Project Structure Guide](./docs/project-structure.md)** - Detailed breakdown of all directories and files
 - **[🌐 GitDiagram Repository Visualization](https://gitdiagram.com)** - Generate interactive diagrams at GitDiagram.com (replace 'github.com' with 'gitdiagram.com' in this repo's URL)
 
+## 🤝 Community & Contributing
+
+We welcome contributions from the community! AutoMind is built by developers, for developers.
+
+### 📋 Community Standards
+- **[📜 Code of Conduct](./CODE_OF_CONDUCT.md)** - Our community guidelines
+- **[🤝 Contributing Guide](./CONTRIBUTING.md)** - How to contribute to AutoMind
+- **[🔒 Security Policy](./SECURITY.md)** - Security reporting and policies
+- **[📄 License](./LICENSE)** - AGPL v3 License
+
+### 🐛 Issue Reporting
+- **[🐛 Bug Report](.github/ISSUE_TEMPLATE/bug_report.md)** - Report bugs and issues
+- **[✨ Feature Request](.github/ISSUE_TEMPLATE/feature_request.md)** - Suggest new features
+- **[🔒 Security Vulnerability](.github/ISSUE_TEMPLATE/security_vulnerability.md)** - Report security issues
+
+### 💬 Get Involved
+- **[Discussions](https://github.com/sbusanelli/AutoMind/discussions)** - Community discussions
+- **[Issues](https://github.com/sbusanelli/AutoMind/issues)** - Bug reports and feature requests
+- **[Pull Requests](https://github.com/sbusanelli/AutoMind/pulls)** - Code contributions
+
+### 🏆 Contributors
+Thank you to all our contributors! Your help makes AutoMind better for everyone.
+
+---
+
+**⭐ Star this repo if you find AutoMind helpful!**
+
 **For new developers:**
 1. Start with [Architecture Overview](./docs/diagrams/architecture-diagrams.md)
 2. Read [Project Structure](./docs/project-structure.md)
