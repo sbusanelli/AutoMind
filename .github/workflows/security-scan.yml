@@ -34,7 +34,6 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: security/sast-config.yml
-          output: semgrep-report.json
 
       - name: Run CodeQL Analysis
         uses: github/codeql-action/init@v2
@@ -75,14 +74,14 @@ jobs:
 
       - name: Run OWASP ZAP Baseline Scan
         run: |
-          docker run --network scheduledbatch-network \
+          docker run --network automind-network \
             -v $PWD/security/dast-config.yml:/zap/wrk/config.yml \
             owasp/zap2docker-stable \
             zap.sh -t http://backend:5000 -J zap-results.json
 
       - name: Run SQLMap Scan
         run: |
-          docker run --network scheduledbatch-network \
+          docker run --network automind-network \
             sqlmapproject/sqlmap \
             -u "http://backend:5000/api/jobs" \
             --batch \

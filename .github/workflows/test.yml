@@ -20,7 +20,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
-          POSTGRES_DB: flowops_test
+          POSTGRES_DB: automind_test
         options: >-
           --health-cmd pg_isready -U postgres
           --health-interval 10s
@@ -59,7 +59,7 @@ jobs:
           npm run test:unit -- --coverage --watchAll=false
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flowops_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/automind_test
           REDIS_URL: redis://localhost:6379
           VAULT_ADDR: http://localhost:8200
           VAULT_TOKEN: test-token
@@ -69,7 +69,7 @@ jobs:
           npm run test:integration -- --coverage --watchAll=false
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flowops_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/automind_test
           REDIS_URL: redis://localhost:6379
           VAULT_ADDR: http://localhost:8200
           VAULT_TOKEN: test-token
@@ -226,7 +226,7 @@ jobs:
           sleep 10
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flowops_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/automind_test
           REDIS_URL: redis://localhost:6379
 
       - name: Wait for application
