@@ -1,5 +1,4 @@
- .coderabbit.yaml
-   credential-rotation.yml
+    credential-rotation.yml
    dependency-update.yml
    greetings.yml
    multi-cloud-deploy.yml
