@@ -1,0 +1,140 @@
+
+
+# AutoMind Development Docker Compose
+# Optimized for local development with hot reload and debugging
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: automind-postgres-dev
+    environment:
+      POSTGRES_DB: automind
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - automind-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache and Queue
+  redis:
+    image: redis:7-alpine
+    container_name: automind-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - automind-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API (Development Mode)
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ../infrastructure/docker/Dockerfile.dev.backend
+    container_name: automind-backend-dev
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: automind
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      FRONTEND_URL: http://localhost:3000
+      LOG_LEVEL: debug
+      AI_MODEL_ENDPOINT: ${OPENAI_API_ENDPOINT:-https://api.openai.com/v1/chat/completions}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-your_openai_example_key}
+    ports:
+      - "5000:5000"
+      - "9229:9229"  # Node.js debugging port
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - automind-dev-network
+    restart: unless-stopped
+    command: npm run dev
+
+  # Frontend Application (Development Mode)
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: ../infrastructure/docker/Dockerfile.dev.frontend
+    container_name: automind-frontend-dev
+    environment:
+      REACT_APP_API_URL: http://localhost:5000
+      REACT_APP_WS_URL: ws://localhost:5000
+      REACT_APP_ENV: development
+      CHOKIDAR_USEPOLLING: true
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - automind-dev-network
+    restart: unless-stopped
+    command: npm start
+
+  # Development Tools
+  adminer:
+    image: adminer:latest
+    container_name: automind-adminer-dev
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    networks:
+      - automind-dev-network
+    depends_on:
+      - postgres
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: automind-redis-commander-dev
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - automind-dev-network
+    depends_on:
+      - redis
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  automind-dev-network:
+    driver: bridge

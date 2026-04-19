@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AutoMind EKS IAM Roles and Service Accounts'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'staging'
+    AllowedValues: ['staging', 'production']
+    Description: 'Deployment environment'
+
+Resources:
+  # IAM Role for AutoMind Backend Service Account
+  AutoMindBackendRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'automind-${Environment}-backend-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSClusterOIDCProviderId}'
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                !Sub 'oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSClusterOIDCProviderId}:sub': !Sub 'system:serviceaccount:automind:automind-backend'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: AutoMindBackendPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:automind-${Environment}-*'
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/automind-${Environment}-*'
+
+  # IAM Role for AutoMind Frontend Service Account
+  AutoMindFrontendRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'automind-${Environment}-frontend-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSClusterOIDCProviderId}'
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                !Sub 'oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSClusterOIDCProviderId}:sub': !Sub 'system:serviceaccount:automind:automind-frontend'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      Policies:
+        - PolicyName: AutoMindFrontendPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  # IAM Policy for EKS Cluster Role
+  AutoMindEKSClusterPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub 'automind-${Environment}-eks-cluster-policy'
+      Roles:
+        - !Ref AutoMindEKSClusterRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ec2:DescribeInstances
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcs
+              - ec2:DescribeVolumes
+              - ec2:CreateTags
+              - ec2:DeleteTags
+              - autoscaling:DescribeAutoScalingGroups
+              - autoscaling:DescribeLaunchConfigurations
+              - autoscaling:UpdateAutoScalingGroup
+            Resource: '*'
+
+Outputs:
+  BackendRoleArn:
+    Description: 'IAM Role ARN for AutoMind Backend'
+    Value: !GetAtt AutoMindBackendRole.Arn
+    Export:
+      Name: !Sub 'automind-${Environment}-backend-role-arn'
+
+  FrontendRoleArn:
+    Description: 'IAM Role ARN for AutoMind Frontend'
+    Value: !GetAtt AutoMindFrontendRole.Arn
+    Export:
+      Name: !Sub 'automind-${Environment}-frontend-role-arn'

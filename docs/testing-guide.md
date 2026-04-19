@@ -2,7 +2,7 @@
 
 ## 🧪 Overview
 
-This guide covers the comprehensive testing strategy for FlowOps, including unit tests, integration tests, and end-to-end (E2E) tests using modern testing frameworks and best practices.
+This guide covers the comprehensive testing strategy for AutoMind, including unit tests, integration tests, and end-to-end (E2E) tests using modern testing frameworks and best practices.
 
 ## 🎯 Testing Strategy
 
@@ -580,4 +580,4 @@ export class MockFactory {
 
 ---
 
-**This comprehensive testing strategy ensures FlowOps maintains high code quality and reliability!** 🧪
+**This comprehensive testing strategy ensures AutoMind maintains high code quality and reliability!** 🧪
