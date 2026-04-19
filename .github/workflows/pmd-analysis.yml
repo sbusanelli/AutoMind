@@ -30,15 +30,15 @@ jobs:
 
       - name: Download PMD
         run: |
-          if [ ! -f ~/.pmd/pmd-bin-6.55.0/bin/pmd ]; then
-            wget https://github.com/pmd/pmd/releases/download/pmd/6.55.0/pmd-bin-6.55.0.zip
-            unzip pmd-bin-6.55.0.zip -d ~/.pmd/
-            chmod +x ~/.pmd/pmd-bin-6.55.0/bin/pmd
+          if [ ! -f ~/.pmd/pmd-bin-7.6.0/bin/pmd ]; then
+            wget -O pmd-bin-7.6.0.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F7.6.0/pmd-bin-7.6.0.zip
+            unzip pmd-bin-7.6.0.zip
+            chmod +x pmd-bin-7.6.0/bin/pmd
           fi
 
       - name: Run PMD Analysis
         run: |
-          ~/.pmd/pmd-bin-6.55.0/bin/pmd \
+          ~/.pmd/pmd-bin-7.6.0/bin/pmd \
             -d . \
             -R pmd-ruleset.xml \
             -f xml \
