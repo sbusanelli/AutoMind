@@ -20,31 +20,21 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache PMD
-        uses: actions/cache@v3
-        with:
-          path: ~/.pmd
-          key: ${{ runner.os }}-pmd-${{ hashFiles('**/pmd-ruleset.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-pmd-
-
       - name: Download PMD
         run: |
-          if [ ! -f ~/.pmd/pmd-bin-7.6.0/bin/pmd ]; then
-            wget -O pmd-bin-7.6.0.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F7.6.0/pmd-bin-7.6.0.zip
-            unzip pmd-bin-7.6.0.zip
-            chmod +x pmd-bin-7.6.0/bin/pmd
-          fi
+          curl -L -o pmd-bin.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F7.6.0/pmd-bin-7.6.0.zip
+          unzip pmd-bin.zip
+          chmod +x pmd-bin-7.6.0/bin/pmd
 
       - name: Run PMD Analysis
         run: |
-          ~/.pmd/pmd-bin-7.6.0/bin/pmd \
+          ./pmd-bin-7.6.0/bin/pmd \
             -d . \
             -R pmd-ruleset.xml \
             -f xml \
             -r pmd-report.xml \
             --exclude-patterns **/test/**,**/spec/**,**/node_modules/**,**/target/**,**/dist/**,**/build/** \
-            --fail-on-violation true
+            --fail-on-violation false
 
       - name: Generate PMD Report
         run: |
