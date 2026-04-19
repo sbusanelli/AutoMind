@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: automind
+  labels:
+    name: automind
+    environment: staging
+    project: automind
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: automind-prod
+  labels:
+    name: automind-prod
+    environment: production
+    project: automind

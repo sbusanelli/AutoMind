@@ -2,12 +2,12 @@
 
 ## 🔍 Overview
 
-PMD (Project Management for Development) is a static code analysis tool used to identify potential problems in Java code. FlowOps uses PMD to ensure code quality, security compliance, and best practices.
+PMD (Project Management for Development) is a static code analysis tool used to identify potential problems in Java code. AutoMind uses PMD to ensure code quality, security compliance, and best practices.
 
 ## 🎯 PMD Configuration
 
 ### **Custom Ruleset**
-FlowOps uses a custom PMD ruleset (`pmd-ruleset.xml`) that includes:
+AutoMind uses a custom PMD ruleset (`pmd-ruleset.xml`) that includes:
 
 #### **Security Rules**
 - **Hardcoded Credentials**: Detects hardcoded passwords, tokens, API keys

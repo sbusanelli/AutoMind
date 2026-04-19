@@ -61,7 +61,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
       
       - name: Install dependencies (for context)
         run: |
@@ -72,6 +71,18 @@ jobs:
             cd frontend && npm ci --no-audit --no-fund
           fi
       
+      - name: Check API Keys
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OPENAI_API_KEY" ]; then
+            echo "No API keys found, OpenCode will run in demo mode"
+            echo "To enable full functionality, add ANTHROPIC_API_KEY or OPENAI_API_KEY to repository secrets"
+          else
+            echo "API keys found, OpenCode will run with full functionality"
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
       - name: Run OpenCode AI Review
         uses: anomalyco/opencode/github@latest
         env:
@@ -86,6 +97,7 @@ jobs:
           
           # Custom prompt if provided
           prompt: ${{ github.event.inputs.custom_prompt || '' }}
+        continue-on-error: true
       
       - name: Upload OpenCode logs
         if: always()
