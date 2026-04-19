@@ -1,0 +1,185 @@
+# OpenCode Configuration for AutoMind
+# This file configures the OpenCode AI agent behavior
+
+# Default model for code reviews
+model: anthropic/claude-sonnet-4-20250514
+
+# Default agent to use
+agent: review
+
+# Share sessions to help improve OpenCode (public repos only)
+share: true
+
+# Maximum tokens for responses
+max_tokens: 4000
+
+# Temperature for responses (lower = more deterministic)
+temperature: 0.1
+
+# Custom prompts for different scenarios
+prompts:
+  # Default code review prompt
+  review: |
+    You are an expert code reviewer for the AutoMind project - an AI-powered autonomous operations system.
+    
+    Review the provided code changes focusing on:
+    1. **Code Quality**: TypeScript/Node.js best practices, error handling, type safety
+    2. **Security**: Input validation, authentication, authorization, secret handling
+    3. **Performance**: Database queries, API efficiency, memory usage
+    4. **Architecture**: Design patterns, separation of concerns, scalability
+    5. **Testing**: Test coverage, test quality, edge cases
+    6. **Documentation**: Code comments, README updates, API docs
+    
+    Provide specific, actionable feedback with:
+    - Line-by-line suggestions where appropriate
+    - Security vulnerabilities with remediation steps
+    - Performance optimizations
+    - Best practice recommendations
+    - Missing test cases
+    
+    Format your response with clear sections and code examples where helpful.
+  
+  # Security-focused review
+  security: |
+    Perform a comprehensive security review focusing on:
+    1. Authentication and authorization flaws
+    2. Input validation and sanitization
+    3. SQL injection and XSS vulnerabilities
+    4. Secret/credential exposure
+    5. Dependency security issues
+    6. API security best practices
+    
+    Highlight any critical security issues that need immediate attention.
+  
+  # Performance-focused review
+  performance: |
+    Analyze the code for performance issues:
+    1. Database query optimization
+    2. Memory leaks and resource management
+    3. API response time improvements
+    4. Caching opportunities
+    5. Async/await optimization
+    6. Bundle size considerations
+    
+    Provide specific optimization suggestions with expected impact.
+  
+  # Architecture review
+  architecture: |
+    Review the architectural aspects:
+    1. Design pattern usage
+    2. Module separation and coupling
+    3. Scalability considerations
+    4. Error handling strategies
+    5. Configuration management
+    6. Integration patterns
+    
+    Suggest improvements for maintainability and scalability.
+
+# File patterns to include/exclude
+include_patterns:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.json"
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "Dockerfile*"
+  - "**/package.json"
+
+exclude_patterns:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/coverage/**"
+  - "**/*.min.js"
+  - "**/vendor/**"
+  - "**/.git/**"
+
+# Review thresholds and rules
+rules:
+  # Maximum file size to review (in lines)
+  max_file_lines: 500
+  
+  # Minimum confidence level for suggestions
+  min_confidence: 0.7
+  
+  # Categories to always check
+  always_check:
+    - security
+    - typescript
+    - best_practices
+  
+  # Categories to check for large changes
+  large_changes:
+    - performance
+    - architecture
+    - testing
+
+# Integration settings
+integrations:
+  # GitHub integration
+  github:
+    # Create comments on PRs
+    comment_on_pr: true
+    
+    # Create status checks
+    status_checks: true
+    
+    # Label suggestions
+    suggest_labels: true
+    
+    # Request changes for critical issues
+    request_changes: true
+  
+  # SonarQubit integration (if available)
+  sonarqube:
+    enabled: false
+    project_key: "automind"
+
+# Custom rules for AutoMind project
+project_rules:
+  # TypeScript specific rules
+  typescript:
+    - Ensure proper type annotations
+    - Check for any type usage
+    - Verify interface consistency
+    - Validate async/await usage
+  
+  # Node.js specific rules
+  nodejs:
+    - Check for memory leaks
+    - Validate error handling
+    - Review dependency usage
+    - Analyze bundle size impact
+  
+  # Docker specific rules
+  docker:
+    - Multi-stage optimization
+    - Security scanning
+    - Layer caching best practices
+    - Environment variable usage
+  
+  # Kubernetes specific rules
+  kubernetes:
+    - Resource limits and requests
+    - Security contexts
+    - Health check configurations
+    - Service mesh considerations
+
+# Output formatting
+output:
+  # Use markdown formatting
+  format: markdown
+  
+  # Include code snippets
+  include_code: true
+  
+  # Include severity levels
+  include_severity: true
+  
+  # Group by category
+  group_by_category: true
+  
+  # Summary section
+  include_summary: true
