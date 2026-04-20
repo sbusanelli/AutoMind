@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
+import commentsRouter from './routes/comments';
 
 // Load environment variables
 dotenv.config();
@@ -299,6 +300,62 @@ app.get('/', (req, res) => {
                     </dl>
                 </div>
             </div>
+
+            <!-- AI Comments Section -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-md mt-6">
+                <div class="px-4 py-5 sm:px-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">AI Comments</h3>
+                            <p class="mt-1 max-w-2xl text-sm text-gray-500">AI-generated insights and user discussions</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="generateCommentBtn" class="text-xs bg-blue-600 text-white px-2 py-1 rounded">Generate AI Comment</button>
+                            <button id="refreshCommentsBtn" class="text-xs bg-gray-600 text-white px-2 py-1 rounded">Refresh</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200">
+                    <!-- Comment Filters -->
+                    <div class="px-4 py-3 border-b border-gray-200">
+                        <div class="flex flex-wrap gap-2">
+                            <select id="categoryFilter" class="text-xs border rounded px-2 py-1">
+                                <option value="">All Categories</option>
+                                <option value="insight">Insights</option>
+                                <option value="recommendation">Recommendations</option>
+                                <option value="warning">Warnings</option>
+                                <option value="question">Questions</option>
+                                <option value="achievement">Achievements</option>
+                            </select>
+                            <select id="sentimentFilter" class="text-xs border rounded px-2 py-1">
+                                <option value="">All Sentiments</option>
+                                <option value="positive">Positive</option>
+                                <option value="neutral">Neutral</option>
+                                <option value="negative">Negative</option>
+                            </select>
+                            <select id="priorityFilter" class="text-xs border rounded px-2 py-1">
+                                <option value="">All Priorities</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Comments Container -->
+                    <div id="commentsContainer" class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                        <!-- Comments will be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- Add Comment Form -->
+                    <div class="px-4 py-3 border-t border-gray-200">
+                        <div class="flex space-x-2">
+                            <input type="text" id="newCommentInput" placeholder="Add a comment..." class="flex-1 text-sm border rounded px-2 py-1">
+                            <button id="addCommentBtn" class="text-xs bg-green-600 text-white px-2 py-1 rounded">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -456,6 +513,211 @@ app.get('/', (req, res) => {
             });
         }
 
+        // AI Comments functionality
+        let comments = [];
+
+        // Load comments from API
+        async function loadComments() {
+            try {
+                const response = await fetch('/api/comments');
+                const result = await response.json();
+                if (result.success) {
+                    comments = result.data;
+                    renderComments();
+                }
+            } catch (error) {
+                console.error('Error loading comments:', error);
+            }
+        }
+
+        // Render comments in the container
+        function renderComments() {
+            const container = document.getElementById('commentsContainer');
+            container.innerHTML = '';
+            
+            // Apply filters
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const sentimentFilter = document.getElementById('sentimentFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            
+            let filteredComments = comments.filter(comment => {
+                if (categoryFilter && comment.category !== categoryFilter) return false;
+                if (sentimentFilter && comment.sentiment !== sentimentFilter) return false;
+                if (priorityFilter && comment.priority !== priorityFilter) return false;
+                return true;
+            });
+            
+            if (filteredComments.length === 0) {
+                container.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 text-center">No comments found</div>';
+                return;
+            }
+            
+            filteredComments.forEach(comment => {
+                const commentDiv = createCommentElement(comment);
+                container.appendChild(commentDiv);
+            });
+        }
+
+        // Create comment element
+        function createCommentElement(comment) {
+            const div = document.createElement('div');
+            div.className = 'px-4 py-3 hover:bg-gray-50';
+            
+            const categoryClass = getCategoryClass(comment.category);
+            const sentimentClass = getSentimentClass(comment.sentiment);
+            const priorityClass = getPriorityClass(comment.priority);
+            
+            div.innerHTML = 
+                '<div class="flex items-start space-x-3">' +
+                    '<div class="flex-shrink-0">' +
+                        '<div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ' + (comment.isAI ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') + '">' +
+                            (comment.isAI ? 'AI' : 'U') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="flex items-center space-x-2 mb-1">' +
+                            '<p class="text-sm font-medium text-gray-900">' + comment.author + '</p>' +
+                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + categoryClass + '">' + comment.category + '</span>' +
+                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + sentimentClass + '">' + comment.sentiment + '</span>' +
+                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + priorityClass + '">' + comment.priority + '</span>' +
+                        '</div>' +
+                        '<p class="text-sm text-gray-700">' + comment.content + '</p>' +
+                        '<p class="text-xs text-gray-500 mt-1">' + formatTime(comment.timestamp) + '</p>' +
+                        (comment.metadata && comment.metadata.actionItems && comment.metadata.actionItems.length > 0 ?
+                            '<div class="mt-2">' +
+                                '<p class="text-xs font-medium text-gray-600">Action Items:</p>' +
+                                '<ul class="text-xs text-gray-600 list-disc list-inside">' +
+                                    comment.metadata.actionItems.map(item => '<li>' + item + '</li>').join('') +
+                                '</ul>' +
+                            '</div>'                            : ''
+                        ) +
+                    '</div>' +
+                    (!comment.isAI ? 
+                        '<div class="flex-shrink-0">' +
+                            '<button onclick="deleteComment(\'' + comment.id + '\')" class="text-xs text-red-600 hover:text-red-800">Delete</button>' +
+                        '</div>'                        : ''
+                    ) +
+                '</div>';
+            
+            return div;
+        }
+
+        // Get category styling class
+        function getCategoryClass(category) {
+            const classes = {
+                insight: 'bg-blue-100 text-blue-800',
+                recommendation: 'bg-green-100 text-green-800',
+                warning: 'bg-red-100 text-red-800',
+                question: 'bg-yellow-100 text-yellow-800',
+                achievement: 'bg-purple-100 text-purple-800'
+            };
+            return classes[category] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Get sentiment styling class
+        function getSentimentClass(sentiment) {
+            const classes = {
+                positive: 'bg-green-100 text-green-800',
+                neutral: 'bg-gray-100 text-gray-800',
+                negative: 'bg-red-100 text-red-800'
+            };
+            return classes[sentiment] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Get priority styling class
+        function getPriorityClass(priority) {
+            const classes = {
+                high: 'bg-red-100 text-red-800',
+                medium: 'bg-yellow-100 text-yellow-800',
+                low: 'bg-green-100 text-green-800'
+            };
+            return classes[priority] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return diffMins + ' min ago';
+            if (diffMins < 1440) return Math.floor(diffMins / 60) + ' hours ago';
+            return date.toLocaleDateString();
+        }
+
+        // Generate AI comment
+        async function generateAIComment() {
+            try {
+                const context = 'System performance metrics: ' + JSON.stringify(dashboard.metrics) + 
+                               '. Recent insights: ' + dashboard.insights.map(i => i.message).join('. ');
+                
+                const response = await fetch('/api/comments/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        context: context,
+                        metrics: dashboard.metrics,
+                        category: 'insight'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    comments.unshift(result.data);
+                    renderComments();
+                    console.log('AI comment generated:', result.data);
+                }
+            } catch (error) {
+                console.error('Error generating AI comment:', error);
+            }
+        }
+
+        // Add user comment
+        async function addUserComment() {
+            const input = document.getElementById('newCommentInput');
+            const content = input.value.trim();
+            
+            if (!content) return;
+            
+            try {
+                const response = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: content, author: 'User' })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    comments.unshift(result.data);
+                    renderComments();
+                    input.value = '';
+                    console.log('User comment added:', result.data);
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+            }
+        }
+
+        // Delete comment
+        async function deleteComment(commentId) {
+            try {
+                const response = await fetch('/api/comments/' + commentId, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    comments = comments.filter(c => c.id !== commentId);
+                    renderComments();
+                    console.log('Comment deleted:', commentId);
+                }
+            } catch (error) {
+                console.error('Error deleting comment:', error);
+            }
+        }
+
         // Add event listeners when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('refreshBtn').addEventListener('click', refreshData);
@@ -464,8 +726,28 @@ app.get('/', (req, res) => {
             document.getElementById('testTurboQuantBtn').addEventListener('click', testTurboQuant);
             document.getElementById('testAIBtn').addEventListener('click', testAI);
             
+            // AI Comments event listeners
+            document.getElementById('generateCommentBtn').addEventListener('click', generateAIComment);
+            document.getElementById('refreshCommentsBtn').addEventListener('click', loadComments);
+            document.getElementById('addCommentBtn').addEventListener('click', addUserComment);
+            
+            // Filter event listeners
+            document.getElementById('categoryFilter').addEventListener('change', renderComments);
+            document.getElementById('sentimentFilter').addEventListener('change', renderComments);
+            document.getElementById('priorityFilter').addEventListener('change', renderComments);
+            
+            // Enter key for comment input
+            document.getElementById('newCommentInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addUserComment();
+                }
+            });
+            
             // Populate AI insights
             populateInsights();
+            
+            // Load initial comments
+            loadComments();
             
             console.log('AutoMind Dashboard initialized successfully!');
         });
@@ -494,6 +776,8 @@ app.get('/ready', (req, res) => {
 });
 
 // API routes
+app.use('/api/comments', commentsRouter);
+
 app.get('/api/status', (req, res) => {
   res.json({
     message: 'AutoMind Backend API is running',
