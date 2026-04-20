@@ -158,7 +158,6 @@ describe('API Integration Tests', () => {
         expect(response.body).toHaveProperty('insights');
         expect(response.body.insights).toHaveProperty('performanceInsights');
       });
-    });
   });
 
   describe('Authentication', () => {
@@ -202,7 +201,6 @@ describe('API Integration Tests', () => {
         expect(response.body).toHaveProperty('token');
         expect(response.body.token).toBeDefined();
       });
-    });
   });
 
   describe('Job Management', () => {

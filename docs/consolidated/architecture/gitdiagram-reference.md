@@ -125,9 +125,9 @@ git push origin main
 
 ## Related Documentation
 
-- See [project-structure.md](./project-structure.md) for detailed structure
-- See [architecture-diagrams.md](./diagrams/architecture-diagrams.md) for full diagrams
-- See [development-workflow.md](./diagrams/development-workflow.md) for workflow details
+- See [project-structure.md](../../docs/project-structure.md) for detailed structure
+- See [architecture-diagrams.md](./architecture-diagrams.md) for full diagrams
+- See [development-workflow.md](./development-workflow.md) for workflow details
 
 ---
 

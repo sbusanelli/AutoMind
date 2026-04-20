@@ -43,7 +43,7 @@ defmodule AutomindWeb.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:req, "~> 0.4"},
-      {:redis, "~> 1.4"},
+      {:redix, "~> 1.1"},
       {:websockex, "~> 0.4.3"},
       {:ex_aws, "~> 2.4"},
       {:ex_aws_s3, "~> 2.4"},

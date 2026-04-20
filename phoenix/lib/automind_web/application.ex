@@ -6,21 +6,17 @@ defmodule AutomindWeb.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
-      AutomindWeb.Repo,
+      # Start Ecto repository (disabled for demo)
+      # AutomindWeb.Repo,
       # Start the Telemetry supervisor
       AutomindWebWeb.Telemetry,
       # Start the PubSub system
-      {Phoenix.PubSub, name: AutomindWeb.PubSub, adapter: Phoenix.PubSub.Redis},
-      # Start Finch
+      {Phoenix.PubSub, name: AutomindWeb.PubSub},
+      # Start Finch for HTTP requests
       {Finch, name: AutomindWeb.Finch},
-      # Start the Endpoint (http/https)
+      # Start the Endpoint
       AutomindWebWeb.Endpoint,
-      # Start Redis connection
-      {Redix, name: AutomindWeb.Redis},
-      # Start AI Operations supervisor
-      AutomindWeb.AI.OperationsSupervisor,
-      # Start TurboQuant integration
+            # Start TurboQuant Supervisor
       AutomindWeb.TurboQuant.Supervisor
     ]
 

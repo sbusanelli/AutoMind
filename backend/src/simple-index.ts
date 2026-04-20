@@ -85,6 +85,162 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
+// TurboQuant API routes
+import { TurboQuantService, TurboQuantConfig } from './turboquant/index';
+import { LLMIntegrationService, DocumentProcessingService } from './turboquant/llm-integration';
+import Logger from './utils/logger';
+
+const logger = new Logger('TurboQuantAPI');
+
+// Initialize TurboQuant services
+let turboQuantService: TurboQuantService;
+let llmIntegration: LLMIntegrationService;
+let documentProcessing: DocumentProcessingService;
+
+const initializeTurboQuant = async () => {
+  try {
+    const config: TurboQuantConfig = {
+      bitWidth: 3,
+      enablePolarQuant: true,
+      enableQJL: true,
+      batchSize: 16,
+      maxSequenceLength: 4096,
+      enableGPUAcceleration: false,
+      compressionRatio: 6,
+      enableMemoryPool: true,
+      maxMemoryUsage: 512
+    };
+
+    turboQuantService = new TurboQuantService(config);
+    await turboQuantService.initialize();
+    
+    llmIntegration = new LLMIntegrationService(turboQuantService);
+    documentProcessing = new DocumentProcessingService(turboQuantService);
+    
+    logger.info('TurboQuant services initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize TurboQuant services:', error);
+  }
+};
+
+// Initialize services on startup
+initializeTurboQuant();
+
+// TurboQuant compression endpoint
+app.post('/api/turboquant/compress', async (req, res) => {
+  try {
+    const { data, bitWidth = 3 } = req.body;
+    
+    if (!data || !Array.isArray(data)) {
+      return res.status(400).json({ error: 'Data array is required' });
+    }
+
+    if (!turboQuantService) {
+      return res.status(503).json({ error: 'TurboQuant service not available' });
+    }
+
+    const floatData = new Float32Array(data);
+    const result = await turboQuantService.compressDocumentContext(floatData);
+    
+    res.json({
+      success: true,
+      data: Array.from(result.data),
+      metadata: result.metadata,
+      processingTime: Date.now()
+    });
+  } catch (error) {
+    logger.error('Compression error:', error);
+    res.status(500).json({ error: 'Compression failed' });
+  }
+});
+
+// TurboQuant decompression endpoint
+app.post('/api/turboquant/decompress', async (req, res) => {
+  try {
+    const { data, metadata } = req.body;
+    
+    if (!data || !metadata) {
+      return res.status(400).json({ error: 'Data and metadata are required' });
+    }
+
+    if (!turboQuantService) {
+      return res.status(503).json({ error: 'TurboQuant service not available' });
+    }
+
+    const floatData = new Float32Array(data);
+    const result = await turboQuantService.decompressDocumentContext({ data: floatData, metadata });
+    
+    res.json({
+      success: true,
+      data: Array.from(result),
+      processingTime: Date.now()
+    });
+  } catch (error) {
+    logger.error('Decompression error:', error);
+    res.status(500).json({ error: 'Decompression failed' });
+  }
+});
+
+// TurboQuant metrics endpoint
+app.get('/api/turboquant/metrics', async (req, res) => {
+  try {
+    if (!turboQuantService) {
+      return res.status(503).json({ error: 'TurboQuant service not available' });
+    }
+
+    const metrics = turboQuantService.getPerformanceMetrics();
+    res.json({
+      success: true,
+      metrics,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Metrics error:', error);
+    res.status(500).json({ error: 'Failed to get metrics' });
+  }
+});
+
+// Document processing endpoint
+app.post('/api/turboquant/process-document', async (req, res) => {
+  try {
+    const { document, analysisType = 'summary', provider = 'openai' } = req.body;
+    
+    if (!document) {
+      return res.status(400).json({ error: 'Document is required' });
+    }
+
+    if (!documentProcessing) {
+      return res.status(503).json({ error: 'Document processing service not available' });
+    }
+
+    const result = await documentProcessing.analyzeDocument(document, analysisType);
+    
+    res.json({
+      success: true,
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Document processing error:', error);
+    res.status(500).json({ error: 'Document processing failed' });
+  }
+});
+
+// TurboQuant health check
+app.get('/api/turboquant/health', (req, res) => {
+  const health = {
+    status: 'healthy',
+    services: {
+      turboQuant: !!turboQuantService,
+      llmIntegration: !!llmIntegration,
+      documentProcessing: !!documentProcessing
+    },
+    timestamp: new Date().toISOString()
+  };
+
+  res.json(health);
+});
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);

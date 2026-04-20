@@ -1,5 +1,6 @@
 defmodule AutomindWebWeb.Router do
   use AutomindWebWeb, :router
+  import Phoenix.LiveDashboard.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -40,8 +41,10 @@ defmodule AutomindWebWeb.Router do
     scope "/dev" do
       pipe_through :browser
 
-      live_dashboard "/dashboard", metrics: AutomindWebWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
+  
+  # LiveDashboard route
+  live_dashboard "/dashboard", metrics: AutomindWebWeb.Telemetry
 end

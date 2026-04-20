@@ -562,9 +562,9 @@ gitleaks protect --report-format json --report-path gitleaks-report.json
 
 ### **Documentation**
 
-- [AutoMind Security Guidelines](security-guidelines.md)
-- [AutoMind Development Guide](development.md)
-- [AutoMind API Documentation](api-reference.md)
+- [AutoMind Security Guidelines](../security/Security-Guidelines.md)
+- [AutoMind Development Guide](../architecture/development-workflow.md)
+- [AutoMind API Documentation](../api/API-Reference.md)
 
 ### **Issues and Help**
 

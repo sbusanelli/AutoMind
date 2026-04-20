@@ -117,9 +117,8 @@ Test Pyramid
 │    git checkout -b release/v1.x.x        │
 │                                          │
 │ 2. Update Version Numbers                │
-│    ├──► package.json                    │
-│    ├──► CHANGELOG.md                    │
-│    └──► docs                            │
+│    |---> package.json                    │
+│    |---> docs                            │
 │                                          │
 │ 3. Run Full Test Suite                   │
 │    npm run test:ci                      │

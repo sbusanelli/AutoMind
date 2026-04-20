@@ -51,16 +51,11 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-# Configure Redis for Phoenix PubSub and caching
-config :automind_web, AutomindWeb.PubSub,
-  adapter: Phoenix.PubSub.Redis,
-  redis_url: System.get_env("REDIS_URL", "redis://localhost:6379"),
-  node_name: System.get_env("NODE_NAME", "automind_1")
-
-# Configure Redis connection
-config :redis,
-  url: System.get_env("REDIS_URL", "redis://localhost:6379"),
-  name: :automind_redis
+# Redis PubSub configuration (commented out for now)
+# config :automind_web, AutomindWeb.PubSub,
+#   adapter: Phoenix.PubSub.Redis,
+#   url: System.get_env("REDIS_URL", "redis://localhost:6379"),
+#   node_name: System.get_env("NODE_NAME", "automind_1")
 
 # Configure TurboQuant integration
 config :automind_web, :turboquant,
