@@ -614,7 +614,7 @@ app.get('/', (req, res) => {
                                 '<ul class="text-xs text-gray-600 list-disc list-inside">' +
                                     comment.metadata.actionItems.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
                                 '</ul>' +
-                            '</div>'                            : ''
+                            '</div>' : ''
                         ) +
                     '</div>' +
                     (!comment.isAI ? 
