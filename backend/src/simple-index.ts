@@ -592,38 +592,101 @@ app.get('/', (req, res) => {
             const sentimentClass = getSentimentClass(comment.sentiment);
             const priorityClass = getPriorityClass(comment.priority);
             
-            div.innerHTML = 
-                '<div class="flex items-start space-x-3">' +
-                    '<div class="flex-shrink-0">' +
-                        '<div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ' + (comment.isAI ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') + '">' +
-                            (comment.isAI ? 'AI' : 'U') +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="flex-1 min-w-0">' +
-                        '<div class="flex items-center space-x-2 mb-1">' +
-                            '<p class="text-sm font-medium text-gray-900">' + comment.author + '</p>' +
-                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + categoryClass + '">' + comment.category + '</span>' +
-                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + sentimentClass + '">' + comment.sentiment + '</span>' +
-                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + priorityClass + '">' + comment.priority + '</span>' +
-                        '</div>' +
-                        '<p class="text-sm text-gray-700">' + comment.content + '</p>' +
-                        '<p class="text-xs text-gray-500 mt-1">' + formatTime(comment.timestamp) + '</p>' +
-                        (comment.metadata && comment.metadata.actionItems && comment.metadata.actionItems.length > 0 ?
-                            '<div class="mt-2">' +
-                                '<p class="text-xs font-medium text-gray-600">Action Items:</p>' +
-                                '<ul class="text-xs text-gray-600 list-disc list-inside">' +
-                                    comment.metadata.actionItems.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
-                                '</ul>' +
-                            '</div>' : ''
-                        ) +
-                    '</div>' +
-                    (!comment.isAI ? 
-                        '<div class="flex-shrink-0">' +
-                            '<button onclick="deleteComment(\'' + comment.id + '\')" class="text-xs text-red-600 hover:text-red-800">Delete</button>' +
-                        '</div>' : ''
-                    ) +
-                '</div>';
+            // Create main container
+            const mainDiv = document.createElement('div');
+            mainDiv.className = 'flex items-start space-x-3';
             
+            // Create avatar
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'flex-shrink-0';
+            const avatar = document.createElement('div');
+            avatar.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ' + (comment.isAI ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800');
+            avatar.textContent = comment.isAI ? 'AI' : 'U';
+            avatarDiv.appendChild(avatar);
+            mainDiv.appendChild(avatarDiv);
+            
+            // Create content area
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'flex-1 min-w-0';
+            
+            // Create header with badges
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'flex items-center space-x-2 mb-1';
+            
+            const authorP = document.createElement('p');
+            authorP.className = 'text-sm font-medium text-gray-900';
+            authorP.textContent = comment.author;
+            headerDiv.appendChild(authorP);
+            
+            const categorySpan = document.createElement('span');
+            categorySpan.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + categoryClass;
+            categorySpan.textContent = comment.category;
+            headerDiv.appendChild(categorySpan);
+            
+            const sentimentSpan = document.createElement('span');
+            sentimentSpan.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + sentimentClass;
+            sentimentSpan.textContent = comment.sentiment;
+            headerDiv.appendChild(sentimentSpan);
+            
+            const prioritySpan = document.createElement('span');
+            prioritySpan.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + priorityClass;
+            prioritySpan.textContent = comment.priority;
+            headerDiv.appendChild(prioritySpan);
+            
+            contentDiv.appendChild(headerDiv);
+            
+            // Create content
+            const contentP = document.createElement('p');
+            contentP.className = 'text-sm text-gray-700';
+            contentP.textContent = comment.content;
+            contentDiv.appendChild(contentP);
+            
+            // Create timestamp
+            const timestampP = document.createElement('p');
+            timestampP.className = 'text-xs text-gray-500 mt-1';
+            timestampP.textContent = formatTime(comment.timestamp);
+            contentDiv.appendChild(timestampP);
+            
+            // Add action items if present
+            if (comment.metadata && comment.metadata.actionItems && comment.metadata.actionItems.length > 0) {
+                const actionItemsDiv = document.createElement('div');
+                actionItemsDiv.className = 'mt-2';
+                
+                const actionItemsTitle = document.createElement('p');
+                actionItemsTitle.className = 'text-xs font-medium text-gray-600';
+                actionItemsTitle.textContent = 'Action Items:';
+                actionItemsDiv.appendChild(actionItemsTitle);
+                
+                const actionItemsList = document.createElement('ul');
+                actionItemsList.className = 'text-xs text-gray-600 list-disc list-inside';
+                
+                for (let i = 0; i < comment.metadata.actionItems.length; i++) {
+                    const li = document.createElement('li');
+                    li.textContent = comment.metadata.actionItems[i];
+                    actionItemsList.appendChild(li);
+                }
+                
+                actionItemsDiv.appendChild(actionItemsList);
+                contentDiv.appendChild(actionItemsDiv);
+            }
+            
+            mainDiv.appendChild(contentDiv);
+            
+            // Add delete button for user comments
+            if (!comment.isAI) {
+                const deleteDiv = document.createElement('div');
+                deleteDiv.className = 'flex-shrink-0';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'text-xs text-red-600 hover:text-red-800';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = function() { deleteComment(comment.id); };
+                
+                deleteDiv.appendChild(deleteBtn);
+                mainDiv.appendChild(deleteDiv);
+            }
+            
+            div.appendChild(mainDiv);
             return div;
         }
 
