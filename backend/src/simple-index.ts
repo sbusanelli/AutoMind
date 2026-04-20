@@ -620,7 +620,7 @@ app.get('/', (req, res) => {
                     (!comment.isAI ? 
                         '<div class="flex-shrink-0">' +
                             '<button onclick="deleteComment(\'' + comment.id + '\')" class="text-xs text-red-600 hover:text-red-800">Delete</button>' +
-                        '</div>'                        : ''
+                        '</div>' : ''
                     ) +
                 '</div>';
             
