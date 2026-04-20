@@ -204,7 +204,7 @@ app.get('/', (req, res) => {
                         <button id="testBtn" onclick="alert('JavaScript is working!')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded-md text-xs font-medium">
                             Test JS
                         </button>
-                        <button id="optimizeBtn" onclick="handleOptimizeClick()" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs font-medium">
+                        <button id="optimizeBtn" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md text-xs font-medium">
                             Optimize
                         </button>
                     </div>
@@ -424,67 +424,92 @@ app.get('/', (req, res) => {
             testHealth();
         }
 
-        // Backup onclick function
-        function handleOptimizeClick() {
-            console.log('handleOptimizeClick called!');
-            alert('Direct onclick handler - Optimization starting!');
-            
-            // Simulate optimization with timeout
-            setTimeout(() => {
-                const memoryReduction = 15 + Math.floor(Math.random() * 10);
-                const performanceGain = 20 + Math.floor(Math.random() * 15);
-                const costSavings = 50 + Math.floor(Math.random() * 100);
-                
-                alert('Optimization Complete! Memory: -' + memoryReduction + '%, Performance: +' + performanceGain + '%, Cost Savings: $' + costSavings);
-                
-                // Update metrics
-                const currentCostSavings = parseInt(dashboard.metrics.costSavings.replace('$', ''));
-                dashboard.metrics.costSavings = '$' + (currentCostSavings + costSavings);
-                dashboard.metrics.systemHealth = 'Optimized';
-                dashboard.metrics.activeJobs = Math.max(1, dashboard.metrics.activeJobs - 1);
-                
-                // Update DOM
-                document.getElementById('costSavings').textContent = dashboard.metrics.costSavings;
-                document.getElementById('systemHealth').textContent = dashboard.metrics.systemHealth;
-                document.getElementById('activeJobs').textContent = dashboard.metrics.activeJobs;
-                
-                console.log('Dashboard updated:', dashboard.metrics);
-            }, 1000);
-        }
-
+        
         async function optimizeSystem() {
             console.log('optimizeSystem function called!');
-            alert('Event listener - Optimization starting!');
+            
+            // Check if required DOM elements exist
+            const costSavingsEl = document.getElementById('costSavings');
+            const systemHealthEl = document.getElementById('systemHealth');
+            const activeJobsEl = document.getElementById('activeJobs');
+            
+            if (!costSavingsEl || !systemHealthEl || !activeJobsEl) {
+                console.error('Required DOM elements not found:', {
+                    costSavings: !!costSavingsEl,
+                    systemHealth: !!systemHealthEl,
+                    activeJobs: !!activeJobsEl
+                });
+                alert('Error: Dashboard elements not loaded properly. Please refresh the page.');
+                return;
+            }
             
             try {
+                // Disable button during optimization
+                const optimizeBtn = document.getElementById('optimizeBtn');
+                if (optimizeBtn) {
+                    optimizeBtn.disabled = true;
+                    optimizeBtn.textContent = 'Optimizing...';
+                }
+                
                 // Simulate optimization with timeout
                 setTimeout(() => {
-                    const memoryReduction = 15 + Math.floor(Math.random() * 10);
-                    const performanceGain = 20 + Math.floor(Math.random() * 15);
-                    const costSavings = 50 + Math.floor(Math.random() * 100);
-                    
-                    alert('Optimization Complete! Memory: -' + memoryReduction + '%, Performance: +' + performanceGain + '%, Cost Savings: $' + costSavings);
-                    
-                    // Update metrics
-                    const currentCostSavings = parseInt(dashboard.metrics.costSavings.replace('$', ''));
-                    dashboard.metrics.costSavings = '$' + (currentCostSavings + costSavings);
-                    dashboard.metrics.systemHealth = 'Optimized';
-                    dashboard.metrics.activeJobs = Math.max(1, dashboard.metrics.activeJobs - 1);
-                    
-                    // Update DOM
-                    document.getElementById('costSavings').textContent = dashboard.metrics.costSavings;
-                    document.getElementById('systemHealth').textContent = dashboard.metrics.systemHealth;
-                    document.getElementById('activeJobs').textContent = dashboard.metrics.activeJobs;
+                    try {
+                        const memoryReduction = 15 + Math.floor(Math.random() * 10);
+                        const performanceGain = 20 + Math.floor(Math.random() * 15);
+                        const costSavings = 50 + Math.floor(Math.random() * 100);
+                        
+                        console.log('Optimization results:', { memoryReduction, performanceGain, costSavings });
+                        
+                        // Update metrics safely
+                        const currentCostSavings = parseInt(dashboard.metrics.costSavings.replace('$', '').replace(',', '')) || 0;
+                        dashboard.metrics.costSavings = '$' + (currentCostSavings + costSavings).toLocaleString();
+                        dashboard.metrics.systemHealth = 'Optimized';
+                        dashboard.metrics.activeJobs = Math.max(1, dashboard.metrics.activeJobs - 1);
+                        
+                        // Update DOM safely
+                        costSavingsEl.textContent = dashboard.metrics.costSavings;
+                        systemHealthEl.textContent = dashboard.metrics.systemHealth;
+                        activeJobsEl.textContent = dashboard.metrics.activeJobs;
+                        
+                        // Re-enable button
+                        if (optimizeBtn) {
+                            optimizeBtn.disabled = false;
+                            optimizeBtn.textContent = 'Optimize';
+                        }
+                        
+                        alert('Optimization Complete! Memory: -' + memoryReduction + '%, Performance: +' + performanceGain + '%, Cost Savings: $' + costSavings);
+                        
+                    } catch (timeoutError) {
+                        console.error('Error in optimization timeout:', timeoutError);
+                        if (optimizeBtn) {
+                            optimizeBtn.disabled = false;
+                            optimizeBtn.textContent = 'Optimize';
+                        }
+                    }
                 }, 1000);
                 
             } catch (error) {
                 console.error('Optimization error:', error);
                 alert('Optimization completed with basic improvements!');
-                dashboard.metrics.systemHealth = 'Optimized';
-                const currentCostSavings = parseInt(dashboard.metrics.costSavings.replace('$', ''));
-                dashboard.metrics.costSavings = '$' + (currentCostSavings + 100);
-                document.getElementById('costSavings').textContent = dashboard.metrics.costSavings;
-                document.getElementById('systemHealth').textContent = dashboard.metrics.systemHealth;
+                
+                // Basic fallback update
+                try {
+                    dashboard.metrics.systemHealth = 'Optimized';
+                    const currentCostSavings = parseInt(dashboard.metrics.costSavings.replace('$', '').replace(',', '')) || 0;
+                    dashboard.metrics.costSavings = '$' + (currentCostSavings + 100).toLocaleString();
+                    
+                    if (costSavingsEl) costSavingsEl.textContent = dashboard.metrics.costSavings;
+                    if (systemHealthEl) systemHealthEl.textContent = dashboard.metrics.systemHealth;
+                    
+                    // Re-enable button
+                    const optimizeBtn = document.getElementById('optimizeBtn');
+                    if (optimizeBtn) {
+                        optimizeBtn.disabled = false;
+                        optimizeBtn.textContent = 'Optimize';
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback update failed:', fallbackError);
+                }
             }
         }
 
