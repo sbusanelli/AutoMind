@@ -587,7 +587,7 @@ app.get('/', (req, res) => {
                             '<div class="mt-2">' +
                                 '<p class="text-xs font-medium text-gray-600">Action Items:</p>' +
                                 '<ul class="text-xs text-gray-600 list-disc list-inside">' +
-                                    comment.metadata.actionItems.map(item => '<li>' + item + '</li>').join('') +
+                                    comment.metadata.actionItems.map(function(item) { return '<li>' + item + '</li>'; }).join('') +
                                 '</ul>' +
                             '</div>'                            : ''
                         ) +
