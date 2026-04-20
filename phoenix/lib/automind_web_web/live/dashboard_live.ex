@@ -3,6 +3,16 @@ defmodule AutomindWebWeb.DashboardLive do
   import AutomindWebWeb.DashboardComponents
 
   @impl true
+  def handle_params(params, _url, socket) do
+    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+  end
+
+  defp apply_action(socket, :index, _params) do
+    socket
+    |> assign(:page_title, "AutoMind Dashboard")
+  end
+
+  @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
       # Subscribe to real-time updates
@@ -13,7 +23,6 @@ defmodule AutomindWebWeb.DashboardLive do
 
     socket =
       socket
-      |> assign(:page_title, "AutoMind Dashboard")
       |> assign(:active_jobs, [
         %{id: 1, name: "Document Processing", status: "active", progress: 75},
         %{id: 2, name: "AI Analysis", status: "active", progress: 45},

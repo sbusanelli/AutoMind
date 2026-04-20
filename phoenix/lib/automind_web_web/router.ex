@@ -17,8 +17,8 @@ defmodule AutomindWebWeb.Router do
   scope "/", AutomindWebWeb do
     pipe_through :browser
 
-    get "/", PageController, :dashboard
-    get "/dashboard", PageController, :dashboard
+    live "/", DashboardLive, :index
+    live "/dashboard", DashboardLive, :index
     live "/ai-insights", AIInsightsLive, :index
     live "/operations", OperationsLive, :index
     live "/metrics", MetricsLive, :index
