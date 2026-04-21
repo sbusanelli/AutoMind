@@ -208,7 +208,7 @@ export const AIAssistant: React.FC = () => {
           <div className="p-4 border-b bg-gray-50">
             <div className="flex items-center space-x-2">
               <Bot className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">FlowOps AI Assistant</h3>
+              <h3 className="text-lg font-semibold text-gray-900">AutoMind AI Assistant</h3>
             </div>
           </div>
 

@@ -2,7 +2,7 @@
 
 ## 🌐 Overview
 
-FlowOps supports deployment across multiple cloud providers with automated CI/CD pipelines, ensuring high availability, disaster recovery, and optimal performance across regions.
+AutoMind supports deployment across multiple cloud providers with automated CI/CD pipelines, ensuring high availability, disaster recovery, and optimal performance across regions.
 
 ## 🏗️ Supported Cloud Providers
 
@@ -68,7 +68,7 @@ AWS_REGION=us-west-2
 
 # GCP Configuration
 GCP_SERVICE_ACCOUNT_KEY=your_gcp_service_account_key
-GCP_REGISTRY=us-central1-docker.pkg.dev/your-project/flowops
+GCP_REGISTRY=us-central1-docker.pkg.dev/your-project/automind
 GCP_REGION=us-central1
 GCP_ZONE=us-central1-a
 
@@ -76,7 +76,7 @@ GCP_ZONE=us-central1-a
 AZURE_CREDENTIALS=your_azure_credentials
 AZURE_REGISTRY_NAME=your_acr_name
 AZURE_REGISTRY=your_acr.azurecr.io
-AZURE_RESOURCE_GROUP=flowops-rg
+AZURE_RESOURCE_GROUP=automind-rg
 AZURE_REGION=eastus
 ```
 
@@ -109,16 +109,16 @@ gh workflow run multi-cloud-deploy.yml \
 # AWS Deployment
 aws cloudformation deploy \
   --template-file infrastructure/aws/cloudformation.yml \
-  --stack-name flowops-production \
+  --stack-name automind-production \
   --parameter-overrides Environment=production
 
 # GCP Deployment
-gcloud deployment-manager deployments create flowops-production \
+gcloud deployment-manager deployments create automind-production \
   --config infrastructure/gcp/deployment.yaml
 
 # Azure Deployment
 az deployment group create \
-  --resource-group flowops-rg \
+  --resource-group automind-rg \
   --template-file infrastructure/azure/arm-template.json \
   --parameters Environment=production
 ```
@@ -135,25 +135,25 @@ global:
     environment: 'production'
 
 scrape_configs:
-  - job_name: 'flowops-aws'
+  - job_name: 'automind-aws'
     static_configs:
-      - targets: ['flowops-production.us-west-2.elb.amazonaws.com:80']
+      - targets: ['automind-production.us-west-2.elb.amazonaws.com:80']
     relabel_configs:
       - source_labels: [__address__]
         target_label: cloud_provider
         replacement: 'aws'
 
-  - job_name: 'flowops-gcp'
+  - job_name: 'automind-gcp'
     static_configs:
-      - targets: ['flowops-production.uc.a.run.app:443']
+      - targets: ['automind-production.uc.a.run.app:443']
     relabel_configs:
       - source_labels: [__address__]
         target_label: cloud_provider
         replacement: 'gcp'
 
-  - job_name: 'flowops-azure'
+  - job_name: 'automind-azure'
     static_configs:
-      - targets: ['flowops-production.azurecontainer.io:443']
+      - targets: ['automind-production.azurecontainer.io:443']
     relabel_configs:
       - source_labels: [__address__]
         target_label: cloud_provider
@@ -241,20 +241,20 @@ failover:
 ```yaml
 alerts:
   - name: MultiCloudHealthCheck
-    condition: up{job=~"flowops-.*"} == 0
+    condition: up{job=~"automind-.*"} == 0
     for: 1m
     severity: critical
     annotations:
-      summary: "FlowOps deployment unhealthy in {{ $labels.cloud_provider }}"
-      runbook: "https://docs.flowops.com/runbooks/multi-cloud-health"
+      summary: "AutoMind deployment unhealthy in {{ $labels.cloud_provider }}"
+      runbook: "https://docs.automind.com/runbooks/multi-cloud-health"
       
   - name: MultiCloudHighLatency
-    condition: http_request_duration_seconds{job=~"flowops-.*"} > 2
+    condition: http_request_duration_seconds{job=~"automind-.*"} > 2
     for: 5m
     severity: warning
     annotations:
       summary: "High latency in {{ $labels.cloud_provider }}"
-      runbook: "https://docs.flowops.com/runbooks/latency-issues"
+      runbook: "https://docs.automind.com/runbooks/latency-issues"
 ```
 
 ## 💰 Cost Management
@@ -325,4 +325,4 @@ cost_tracking:
 
 ---
 
-**Multi-cloud deployment ensures maximum reliability, performance, and cost optimization for FlowOps!** 🌍
+**Multi-cloud deployment ensures maximum reliability, performance, and cost optimization for AutoMind!** 🌍

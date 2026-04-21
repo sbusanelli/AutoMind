@@ -5,11 +5,12 @@
  * Reduces memory usage by 6x with zero accuracy loss
  * 
  * @author AutoMind Team
- * @version 1.0.0
+ * @version 2.0.0 - Real Algorithm Implementation
  */
 
 import { EventEmitter } from 'events';
 import { Logger } from '../utils/logger';
+import { OptimizedTurboQuantEngine } from './optimized-algorithm';
 
 export interface TurboQuantConfig {
   // Compression settings
@@ -48,13 +49,15 @@ export interface QuantizedVector {
 }
 
 /**
- * TurboQuant Engine - Main compression and decompression logic
+ * TurboQuant Engine - Optimized algorithm implementation
  */
 export class TurboQuantEngine extends EventEmitter {
   private config: TurboQuantConfig;
   private logger: Logger;
   private metrics: TurboQuantMetrics;
   private isInitialized: boolean = false;
+  private optimizedEngine: OptimizedTurboQuantEngine;
+  private currentDimension: number;
 
   constructor(config: Partial<TurboQuantConfig> = {}) {
     super();
@@ -72,6 +75,9 @@ export class TurboQuantEngine extends EventEmitter {
     };
     
     this.logger = new Logger('TurboQuant');
+    this.currentDimension = 1024; // Default dimension
+    this.optimizedEngine = new OptimizedTurboQuantEngine(this.currentDimension, this.config.bitWidth);
+    
     this.metrics = {
       compressionRatio: 0,
       memoryReduction: 0,
@@ -113,7 +119,7 @@ export class TurboQuantEngine extends EventEmitter {
   }
 
   /**
-   * Compress KV cache using TurboQuant algorithm
+   * Compress KV cache using real TurboQuant algorithm
    */
   async compressKVCache(kvCache: Float32Array): Promise<QuantizedVector> {
     if (!this.isInitialized) {
@@ -124,35 +130,40 @@ export class TurboQuantEngine extends EventEmitter {
     this.logger.debug(`Compressing KV cache of size: ${kvCache.length} elements`);
 
     try {
-      // Stage 1: PolarQuant - Random rotation + high-quality quantization
-      let compressed = await this.applyPolarQuant(kvCache);
-      
-      // Stage 2: QJL Error Correction - Mathematical error-checker
-      if (this.config.enableQJL) {
-        compressed = await this.applyQJLErrorCorrection(compressed);
+      // Update engine dimension if needed
+      if (kvCache.length !== this.currentDimension) {
+        this.currentDimension = kvCache.length;
+        this.optimizedEngine = new OptimizedTurboQuantEngine(this.currentDimension, this.config.bitWidth);
       }
 
+      // Use optimized TurboQuant algorithm
+      const compressionResult = this.optimizedEngine.compress(kvCache);
       const processingTime = Date.now() - startTime;
-      const compressionRatio = kvCache.length / compressed.length;
       
       // Update metrics
-      this.metrics.compressionRatio = compressionRatio;
-      this.metrics.memoryReduction = (1 - 1 / compressionRatio) * 100;
+      this.metrics.compressionRatio = compressionResult.metadata.compressionRatio;
+      this.metrics.memoryReduction = (1 - 1 / compressionResult.metadata.compressionRatio) * 100;
       this.metrics.processingTime = processingTime;
-      this.metrics.kvCacheSize = compressed.length * 4; // 4 bytes per float32
+      this.metrics.kvCacheSize = compressionResult.metadata.compressedSize;
+      this.metrics.accuracyRetention = compressionResult.metadata.accuracy;
 
       const result: QuantizedVector = {
-        data: compressed,
+        data: new Float32Array(compressionResult.compressed.length), // Create proper sized Float32Array
         metadata: {
-          originalSize: kvCache.length,
-          compressedSize: compressed.length,
-          bitWidth: this.config.bitWidth,
-          timestamp: Date.now()
+          originalSize: kvCache.length, // Use actual original element count
+          compressedSize: compressionResult.metadata.compressedSize,
+          bitWidth: compressionResult.metadata.bitWidth,
+          timestamp: compressionResult.metadata.processingTime
         }
       };
+      
+      // Store compressed bytes in Float32Array for compatibility (each byte as a float)
+      for (let i = 0; i < compressionResult.compressed.length; i++) {
+        result.data[i] = compressionResult.compressed[i];
+      }
 
       this.emit('compressed', result);
-      this.logger.info(`KV cache compressed: ${compressionRatio.toFixed(2)}x reduction in ${processingTime}ms`);
+      this.logger.info(`KV cache compressed: ${compressionResult.metadata.compressionRatio.toFixed(2)}x reduction, ${compressionResult.metadata.accuracy.toFixed(2)}% accuracy in ${processingTime}ms`);
       
       return result;
       
@@ -163,7 +174,7 @@ export class TurboQuantEngine extends EventEmitter {
   }
 
   /**
-   * Decompress KV cache
+   * Decompress KV cache using real TurboQuant algorithm
    */
   async decompressKVCache(quantizedVector: QuantizedVector): Promise<Float32Array> {
     if (!this.isInitialized) {
@@ -174,15 +185,14 @@ export class TurboQuantEngine extends EventEmitter {
     this.logger.debug('Decompressing KV cache');
 
     try {
-      let decompressed = quantizedVector.data;
-      
-      // Reverse QJL error correction if applied
-      if (this.config.enableQJL) {
-        decompressed = await this.reverseQJLErrorCorrection(decompressed);
+      // Convert Float32Array back to Uint8Array for real engine
+      const compressedBytes = new Uint8Array(quantizedVector.data.length);
+      for (let i = 0; i < quantizedVector.data.length; i++) {
+        compressedBytes[i] = Math.floor(quantizedVector.data[i]) & 0xFF; // Extract byte value
       }
       
-      // Reverse PolarQuant
-      decompressed = await this.reversePolarQuant(decompressed);
+      // Use optimized TurboQuant decompression
+      const decompressed = this.optimizedEngine.decompress(compressedBytes);
 
       const processingTime = Date.now() - startTime;
       this.emit('decompressed', decompressed);
@@ -208,6 +218,12 @@ export class TurboQuantEngine extends EventEmitter {
    */
   updateConfig(newConfig: Partial<TurboQuantConfig>): void {
     this.config = { ...this.config, ...newConfig };
+    
+    // Update optimized engine if bit width changed
+    if (newConfig.bitWidth && newConfig.bitWidth !== this.config.bitWidth) {
+      this.optimizedEngine.updateBitWidth(newConfig.bitWidth);
+    }
+    
     this.emit('config-updated', this.config);
   }
 
@@ -232,117 +248,24 @@ export class TurboQuantEngine extends EventEmitter {
     this.logger.info('TurboQuant engine shutdown complete');
   }
 
-  // Private methods for algorithm implementation
+  // Private methods for real algorithm implementation
 
   private async initializeGPU(): Promise<void> {
     // GPU initialization logic
     this.logger.debug('Initializing GPU acceleration...');
-    // Implementation would check for CUDA/Metal availability and load GPU kernels
+    // Real implementation would check for CUDA/Metal availability
   }
 
   private async initializeMemoryPool(): Promise<void> {
     // Memory pool initialization
     this.logger.debug('Initializing memory pool...');
-    // Implementation would pre-allocate memory buffers for efficient reuse
+    // Real implementation would pre-allocate memory buffers
   }
 
   private async loadQuantizationKernels(): Promise<void> {
     // Load quantization kernels
     this.logger.debug('Loading quantization kernels...');
-    // Implementation would load the specific TurboQuant kernels
-  }
-
-  private async applyPolarQuant(data: Float32Array): Promise<Float32Array> {
-    // Stage 1: PolarQuant implementation
-    // 1. Random rotation of data vectors
-    // 2. High-quality quantization to specified bit width
-    
-    const rotated = await this.randomRotation(data);
-    const quantized = await this.quantizeVector(rotated, this.config.bitWidth);
-    
-    return quantized;
-  }
-
-  private async applyQJLErrorCorrection(data: Float32Array): Promise<Float32Array> {
-    // Stage 2: QJL Error Correction implementation
-    // Apply mathematical error-checker to eliminate bias
-    
-    // Simplified QJL implementation
-    const corrected = new Float32Array(data.length);
-    for (let i = 0; i < data.length; i++) {
-      // Apply QJL transformation (simplified)
-      corrected[i] = data[i] + this.calculateQJLCorrection(data[i]);
-    }
-    
-    return corrected;
-  }
-
-  private async reversePolarQuant(data: Float32Array): Promise<Float32Array> {
-    // Reverse PolarQuant transformation
-    const dequantized = await this.dequantizeVector(data, this.config.bitWidth);
-    const derotated = await this.reverseRandomRotation(dequantized);
-    
-    return derotated;
-  }
-
-  private async reverseQJLErrorCorrection(data: Float32Array): Promise<Float32Array> {
-    // Reverse QJL error correction
-    const corrected = new Float32Array(data.length);
-    for (let i = 0; i < data.length; i++) {
-      corrected[i] = data[i] - this.calculateQJLCorrection(data[i]);
-    }
-    
-    return corrected;
-  }
-
-  private async randomRotation(data: Float32Array): Promise<Float32Array> {
-    // Random rotation implementation
-    // In practice, this would use a random orthogonal matrix
-    const rotated = new Float32Array(data.length);
-    for (let i = 0; i < data.length; i++) {
-      // Simplified rotation (actual implementation would use matrix multiplication)
-      rotated[i] = data[i] * Math.cos(Math.PI / 4) - data[(i + 1) % data.length] * Math.sin(Math.PI / 4);
-    }
-    return rotated;
-  }
-
-  private async reverseRandomRotation(data: Float32Array): Promise<Float32Array> {
-    // Reverse random rotation
-    const derotated = new Float32Array(data.length);
-    for (let i = 0; i < data.length; i++) {
-      // Simplified reverse rotation
-      derotated[i] = data[i] * Math.cos(Math.PI / 4) + data[(i + 1) % data.length] * Math.sin(Math.PI / 4);
-    }
-    return derotated;
-  }
-
-  private async quantizeVector(data: Float32Array, bitWidth: number): Promise<Float32Array> {
-    // Vector quantization implementation
-    const levels = Math.pow(2, bitWidth);
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const scale = (max - min) / (levels - 1);
-    
-    const quantized = new Float32Array(data.length);
-    for (let i = 0; i < data.length; i++) {
-      const index = Math.round((data[i] - min) / scale);
-      quantized[i] = min + index * scale;
-    }
-    
-    return quantized;
-  }
-
-  private async dequantizeVector(data: Float32Array, bitWidth: number): Promise<Float32Array> {
-    // Vector dequantization implementation
-    // For this simplified implementation, return as-is
-    // In practice, this would reconstruct the original range
-    return data.slice();
-  }
-
-  private calculateQJLCorrection(value: number): number {
-    // Simplified QJL correction calculation
-    // Actual implementation would use the Johnson-Lindenstrauss transform
-    return value * 0.01; // 1% correction factor (simplified)
+    // Real implementation would load TurboQuant kernels
   }
 
   private async cleanupGPU(): Promise<void> {

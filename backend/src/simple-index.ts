@@ -897,9 +897,15 @@ app.post('/api/ai/chat', async (req, res) => {
 
 // Import optimization endpoint
 import { optimizeSystem } from './routes/optimization';
+import { runVerification, getQuickStatus, getImplementationDetails } from './routes/turboquant-verification';
 
 // System optimization endpoint
 app.post('/api/turboquant/optimize', optimizeSystem);
+
+// TurboQuant verification endpoints
+app.post('/api/turboquant/verify', runVerification);
+app.get('/api/turboquant/status', getQuickStatus);
+app.get('/api/turboquant/implementation', getImplementationDetails);
 
 // TurboQuant API routes
 import { TurboQuantService, TurboQuantConfig } from './turboquant/index';
