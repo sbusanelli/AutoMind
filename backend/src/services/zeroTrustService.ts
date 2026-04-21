@@ -1,7 +1,6 @@
 import { logger } from '../utils/logger';
 import { VaultService } from './vaultService';
 import { RedisService } from './redisService';
-import { MetricsService } from './metricsService';
 
 export interface ZeroTrustConfig {
   sessionTimeout: number;
@@ -15,19 +14,80 @@ export interface ZeroTrustConfig {
 }
 
 export interface SecurityContext {
-  userId: string;
   sessionId: string;
-  deviceId: string;
+  userId: string;
+  username: string;
   ipAddress: string;
   userAgent: string;
-  location: {
-    country: string;
-    region: string;
-    city: string;
-  };
   timestamp: Date;
   riskScore: number;
   trustLevel: 'low' | 'medium' | 'high';
+  deviceId?: string;
+  location?: string;
+  resource?: string;
+  action?: string;
+}
+
+export interface SecurityPolicy {
+  resource: string;
+  actions: string[];
+  riskLevel: number;
+  description: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  passwordHash: string;
+  status: 'active' | 'suspended' | 'locked';
+  permissions?: {
+    resources: string[];
+    actions: string[];
+  };
+  usualHours?: number[];
+  riskScore?: number;
+}
+
+export interface SecurityEvent {
+  id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: Date;
+  userId: string;
+  resourceId: string;
+  details: any;
+}
+
+export interface SecurityPolicy {
+  id: string;
+  name: string;
+  rules: SecurityRule[];
+  enforcement: 'strict' | 'adaptive' | 'monitoring';
+  exceptions: string[];
+}
+
+export interface SecurityRule {
+  type: 'authentication' | 'authorization' | 'device' | 'location' | 'behavior' | 'time';
+  condition: string;
+  action: 'allow' | 'deny' | 'challenge' | 'monitor';
+  riskWeight: number;
+}
+
+export interface RiskAssessment {
+  userId: string;
+  sessionId: string;
+  riskFactors: RiskFactor[];
+  totalRiskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  recommendations: string[];
+  timestamp: Date;
+}
+
+export interface RiskFactor {
+  type: 'new_device' | 'new_location' | 'unusual_time' | 'behavior_anomaly' | 'failed_attempts' | 'privileged_access';
+  weight: number;
+  description: string;
+  detected: Date;
 }
 
 export interface AuthenticationRequest {
@@ -56,9 +116,6 @@ export interface AuthenticationRequest {
   };
 }
 
-export interface SecurityPolicy {
-  id: string;
-  name: string;
   rules: SecurityRule[];
   enforcement: 'strict' | 'adaptive' | 'monitoring';
   exceptions: string[];
@@ -106,7 +163,6 @@ export class ZeroTrustService {
   private config: ZeroTrustConfig;
   private vault: VaultService;
   private redis: RedisService;
-  private metrics: MetricsService;
   private securityPolicies: Map<string, SecurityPolicy> = new Map();
   private activeSessions: Map<string, SecurityContext> = new Map();
   private blockedIPs: Set<string> = new Set();
@@ -637,13 +693,13 @@ export class ZeroTrustService {
     const securityContext: SecurityContext = {
       userId: request.credentials.username,
       sessionId,
-      deviceId: request.deviceInfo.deviceId,
-      ipAddress: request.location.ipAddress,
-      userAgent: request.deviceInfo.userAgent,
-      location: await this.getLocationFromIP(request.location.ipAddress),
+      deviceId: request.deviceInfo?.deviceId || '',
+      ipAddress: request.location?.ipAddress || '',
+      userAgent: request.deviceInfo?.userAgent || '',
+      location: request.location?.ipAddress ? await this.getLocationFromIP(request.location.ipAddress) : undefined,
       timestamp: new Date(),
       riskScore: riskAssessment.totalRiskScore,
-      trustLevel
+      trustLevel: 'low'
     };
 
     // Store security context
@@ -907,7 +963,7 @@ export class ZeroTrustService {
     
     for (const sessionId of sessions) {
       const session = this.activeSessions.get(sessionId);
-      if (session && session.timestamp + this.config.sessionTimeout < new Date().getTime()) {
+      if (session && session.timestamp + this.config.sessionTimeout < Date.now()) {
         this.activeSessions.delete(sessionId);
         await this.redis.del(`session:${sessionId}`);
       }
