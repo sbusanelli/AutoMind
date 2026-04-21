@@ -86,8 +86,10 @@ export const getQuickStatus = async (req: Request, res: Response) => {
     const decompressed = await verification.turboQuant.decompressDocumentContext(compressed);
     const processingTime = Date.now() - startTime;
     
-    const compressionRatio = testData.length / compressed.data.length;
-    const memorySavings = (1 - compressed.data.length / testData.length) * 100;
+    const originalBytes = testData.length * 4; // 4 bytes per Float32
+    const compressedBytes = compressed.data.length; // Already in bytes
+    const compressionRatio = originalBytes / compressedBytes;
+    const memorySavings = (1 - compressedBytes / originalBytes) * 100;
     
     // Simple accuracy calculation
     let totalError = 0;
@@ -104,8 +106,8 @@ export const getQuickStatus = async (req: Request, res: Response) => {
       success: true,
       timestamp: new Date().toISOString(),
       quickTest: {
-        originalSize: testData.length,
-        compressedSize: compressed.data.length,
+        originalSize: originalBytes,
+        compressedSize: compressedBytes,
         compressionRatio: compressionRatio.toFixed(2) + 'x',
         memorySavings: memorySavings.toFixed(1) + '%',
         accuracy: accuracy.toFixed(1) + '%',

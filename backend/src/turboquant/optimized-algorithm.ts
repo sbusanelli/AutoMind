@@ -198,33 +198,69 @@ class UltraFastQuantization {
   }
   
   /**
-   * Ultra-fast quantization using lookup table
+   * Ultra-fast quantization using lookup table with bit packing
    */
   quantize(data: Float32Array): Uint8Array {
     this.calibrate(data);
-    const quantized = new Uint8Array(data.length);
     
-    // Vectorized quantization
+    // Calculate packed array size
+    const bitsPerValue = this.bitWidth;
+    const valuesPerByte = Math.floor(8 / bitsPerValue);
+    const packedSize = Math.ceil(data.length / valuesPerByte);
+    const packed = new Uint8Array(packedSize);
+    
+    // Pack multiple values into each byte
+    let currentByte = 0;
+    let bitPosition = 0;
+    
     for (let i = 0; i < data.length; i++) {
       const value = data[i];
       const scaled = value / this.scale + this.zeroPoint;
       const clamped = Math.max(0, Math.min(this.levels - 1, Math.round(scaled)));
-      quantized[i] = clamped;
+      
+      // Pack the value into the current byte
+      currentByte |= (clamped << bitPosition);
+      bitPosition += bitsPerValue;
+      
+      // When byte is full, store it and move to next
+      if (bitPosition >= 8) {
+        packed[Math.floor(i / valuesPerByte)] = currentByte;
+        currentByte = 0;
+        bitPosition = 0;
+      }
     }
     
-    return quantized;
+    // Store the last byte if it has remaining bits
+    if (bitPosition > 0) {
+      packed[packed.length - 1] = currentByte;
+    }
+    
+    return packed;
   }
   
   /**
-   * Ultra-fast dequantization using lookup table
+   * Ultra-fast dequantization using lookup table with bit unpacking
    */
   dequantize(quantized: Uint8Array): Float32Array {
-    const dequantized = new Float32Array(quantized.length);
+    const bitsPerValue = this.bitWidth;
+    const valuesPerByte = Math.floor(8 / bitsPerValue);
+    const originalSize = quantized.length * valuesPerByte;
+    const dequantized = new Float32Array(originalSize);
     
-    // Vectorized dequantization with lookup table
+    // Unpack bits from compressed data
+    let valueIndex = 0;
+    
     for (let i = 0; i < quantized.length; i++) {
-      const index = quantized[i];
-      dequantized[i] = this.lookupTable[index];
+      const packedByte = quantized[i];
+      
+      // Extract multiple values from each byte
+      for (let bitPos = 0; bitPos < 8 && valueIndex < originalSize; bitPos += bitsPerValue) {
+        const mask = (1 << bitsPerValue) - 1;
+        const shiftedValue = (packedByte >> bitPos) & mask;
+        
+        dequantized[valueIndex] = this.lookupTable[shiftedValue];
+        valueIndex++;
+      }
     }
     
     return dequantized;
@@ -234,8 +270,8 @@ class UltraFastQuantization {
    * Get theoretical compression ratio
    */
   getCompressionRatio(): number {
-    // Original: 32 bits per float
-    // Compressed: bitWidth bits per value
+    // Original: 32 bits per float32
+    // Compressed: bitWidth bits per value (packed efficiently)
     return 32 / this.bitWidth;
   }
 }

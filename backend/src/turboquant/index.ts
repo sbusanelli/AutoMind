@@ -148,7 +148,7 @@ export class TurboQuantEngine extends EventEmitter {
       this.metrics.accuracyRetention = compressionResult.metadata.accuracy;
 
       const result: QuantizedVector = {
-        data: new Float32Array(compressionResult.compressed.length), // Create proper sized Float32Array
+        data: new Float32Array(compressionResult.compressed), // Store compressed bytes directly
         metadata: {
           originalSize: kvCache.length, // Use actual original element count
           compressedSize: compressionResult.metadata.compressedSize,
@@ -156,11 +156,6 @@ export class TurboQuantEngine extends EventEmitter {
           timestamp: compressionResult.metadata.processingTime
         }
       };
-      
-      // Store compressed bytes in Float32Array for compatibility (each byte as a float)
-      for (let i = 0; i < compressionResult.compressed.length; i++) {
-        result.data[i] = compressionResult.compressed[i];
-      }
 
       this.emit('compressed', result);
       this.logger.info(`KV cache compressed: ${compressionResult.metadata.compressionRatio.toFixed(2)}x reduction, ${compressionResult.metadata.accuracy.toFixed(2)}% accuracy in ${processingTime}ms`);

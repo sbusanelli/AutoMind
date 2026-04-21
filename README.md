@@ -252,8 +252,8 @@ automind/
 ### Development Setup
 ```bash
 # Clone and setup
-git clone https://github.com/sbusanelli/ScheduledBatch
-cd ScheduledBatch
+git clone https://github.com/sbusanelli/AutoMind
+cd AutoMind
 
 # Start infrastructure
 docker-compose up -d
