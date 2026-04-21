@@ -61,4 +61,7 @@ export class Logger {
   }
 }
 
+// Create a default logger instance for easy import
+export const logger = new Logger('AutoMind', LogLevel.INFO);
+
 export default Logger;

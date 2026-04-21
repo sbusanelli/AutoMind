@@ -545,7 +545,7 @@ export class ZeroTrustService {
       }
 
       // Verify password
-      const passwordValid = await this.verifyPassword(credentials.password, user.passwordHash);
+      const passwordValid = await this.verifyPassword(credentials.password, user.passwordHash || '');
       
       if (!passwordValid) {
         return { valid: false };
@@ -860,7 +860,7 @@ export class ZeroTrustService {
     await this.redis.ltrim('security_events', 0, 999); // Keep last 1000 events
 
     // Store in database for long-term analysis
-    await this.vault.writeSecret(`security_events/${event.id}`, event);
+    await this.vault.writeSecret(`security_events/${event.id}`, JSON.stringify(event));
 
     // Update metrics
     await this.metrics.incrementCounter(`security_events_${event.type}`);
@@ -907,7 +907,7 @@ export class ZeroTrustService {
     
     for (const sessionId of sessions) {
       const session = this.activeSessions.get(sessionId);
-      if (session && session.timestamp + this.config.sessionTimeout < Date.now()) {
+      if (session && session.timestamp + this.config.sessionTimeout < new Date().getTime()) {
         this.activeSessions.delete(sessionId);
         await this.redis.del(`session:${sessionId}`);
       }
@@ -925,12 +925,14 @@ export class ZeroTrustService {
 
   private async isNewDevice(deviceId: string, username: string): Promise<boolean> {
     const knownDevices = await this.vault.readSecret(`devices/${username}`);
-    return !knownDevices || !knownDevices.devices.includes(deviceId);
+    const deviceData = knownDevices ? JSON.parse(knownDevices) : { devices: [] };
+    return !knownDevices || !deviceData.devices.includes(deviceId);
   }
 
   private async isNewLocation(ipAddress: string, username: string): Promise<boolean> {
     const knownLocations = await this.vault.readSecret(`locations/${username}`);
-    return !knownLocations || !knownLocations.locations.includes(ipAddress);
+    const locationData = knownLocations ? JSON.parse(knownLocations) : { locations: [] };
+    return !knownLocations || !locationData.locations.includes(ipAddress);
   }
 
   private async isUnusualTime(timestamp: Date, username: string): Promise<boolean> {
@@ -940,7 +942,8 @@ export class ZeroTrustService {
     
     if (!userPatterns) return false;
     
-    const usualHours = userPatterns.usualHours || [];
+    const patternsData = typeof userPatterns === 'string' ? JSON.parse(userPatterns) : userPatterns;
+    const usualHours = patternsData.usualHours || [];
     return !usualHours.includes(hour);
   }
 
