@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: automind-backend
+  namespace: automind
+  labels:
+    app: automind
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: automind
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: automind
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: sbusanelli/automind-backend:latest
+        ports:
+        - containerPort: 5000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: automind-config
+        - secretRef:
+            name: automind-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: automind-backend
+  namespace: automind
+  labels:
+    app: automind
+    component: backend
+spec:
+  selector:
+    app: automind
+    component: backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+    name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: automind-backend-headless
+  namespace: automind
+  labels:
+    app: automind
+    component: backend
+spec:
+  selector:
+    app: automind
+    component: backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+    name: http
+  clusterIP: None

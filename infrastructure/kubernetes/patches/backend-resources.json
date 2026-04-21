@@ -1,0 +1,32 @@
+[
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/resources",
+    "value": {
+      "requests": {
+        "memory": "512Mi",
+        "cpu": "250m"
+      },
+      "limits": {
+        "memory": "1Gi",
+        "cpu": "500m"
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "JAVA_OPTS",
+      "value": "-Xms256m -Xmx512m"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "METRICS_PORT",
+      "value": "9090"
+    }
+  }
+]

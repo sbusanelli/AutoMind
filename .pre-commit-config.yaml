@@ -1,4 +1,4 @@
-# FlowOps Pre-commit Configuration
+# AutoMind Pre-commit Configuration
 # Ensures code quality, security, and prevents hardcoded credentials
 
 repos:

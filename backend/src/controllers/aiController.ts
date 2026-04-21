@@ -155,7 +155,7 @@ export class AIController {
       const { message, context } = req.body;
       
       const prompt = `
-        As a FlowOps AI assistant, help with this query about batch job management:
+        As a AutoMind AI assistant, help with this query about batch job management:
         Message: ${message}
         Context: ${JSON.stringify(context || {}, null, 2)}
 

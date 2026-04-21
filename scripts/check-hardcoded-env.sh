@@ -103,6 +103,6 @@ if [ $ERRORS_FOUND -eq 0 ]; then
 else
     echo -e "${RED}❌ Found $ERRORS_FOUND issues with hardcoded environment variables${NC}"
     echo -e "${RED}   Please fix before committing${NC}"
-    echo -e "${YELLOW}💡 Use vault integration: https://docs.flowops.com/security/vault${NC}"
+    echo -e "${YELLOW}   Use vault integration: https://docs.automind.com/security/vault${NC}"
     exit 1
 fi

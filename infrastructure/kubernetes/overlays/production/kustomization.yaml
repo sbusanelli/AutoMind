@@ -1,0 +1,107 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: automind-production-overlays
+  annotations:
+    configmanagement.gke.io/managed: "disabled"
+
+bases:
+- ../..
+
+namespace: automind-prod
+
+commonLabels:
+  environment: production
+  automind.com/environment: "production"
+
+commonAnnotations:
+  automind.com/managed-by: "kustomize"
+  automind.com/environment: "production"
+  automind.com/security-level: "high"
+
+patchesStrategicMerge:
+- patches/backend-production.yaml
+- patches/frontend-production.yaml
+- patches/postgres-production.yaml
+- patches/ingress-production.yaml
+
+patchesJson6902:
+# Production resource scaling
+- target:
+    group: apps
+    version: v1
+    kind: Deployment
+    name: automind-backend
+  path: patches/backend-production-resources.json
+- target:
+    group: apps
+    version: v1
+    kind: Deployment
+    name: automind-frontend
+  path: patches/frontend-production-resources.json
+
+replicas:
+# Production replica counts
+- name: automind-backend
+  count: 5
+- name: automind-frontend
+  count: 3
+- name: automind-redis
+  count: 2
+
+resources:
+# Production resource limits
+- name: automind-backend
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+- name: automind-frontend
+  limits:
+    cpu: 400m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+- name: automind-postgres
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+- name: automind-redis
+  limits:
+    cpu: 400m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+configMapGenerator:
+- name: automind-config
+  behavior: merge
+  literals:
+  - NODE_ENV=production
+  - LOG_LEVEL=warn
+  - METRICS_ENABLED=true
+  - AI_MODEL_ENDPOINT=https://api.openai.com/v1/chat/completions
+  - AI_MAX_TOKENS=4096
+  - AI_TEMPERATURE=0.5
+  - JWT_EXPIRES_IN=24h
+  - CORS_ORIGIN=https://automind.yourdomain.com
+
+secretGenerator:
+- name: automind-secrets
+  behavior: merge
+  envs:
+  - secrets-prod.env
+
+images:
+- name: sbusanelli/automind-backend
+  newTag: v1.0.0
+- name: sbusanelli/automind-frontend
+  newTag: v1.0.0

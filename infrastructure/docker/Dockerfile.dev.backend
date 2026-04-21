@@ -1,0 +1,47 @@
+# AutoMind Backend Development Dockerfile
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S automind -u 1001
+
+# Install system dependencies for development
+RUN apk add --no-cache \
+    curl \
+    dumb-init \
+    && rm -rf /var/cache/apk/*
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm ci && \
+    npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Change ownership of the app directory
+RUN chown -R automind:nodejs /app
+
+# Switch to non-root user
+USER automind
+
+# Expose ports
+EXPOSE 5000 9229
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Use dumb-init as PID 1
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the development server with simple index file
+CMD ["npm", "run", "start"]

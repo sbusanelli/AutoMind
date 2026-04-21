@@ -1,4 +1,6 @@
-import { logger } from '../utils/logger';
+import { Logger } from '../utils/logger';
+
+const logger = new Logger('VaultService');
 
 export interface VaultConfig {
   url: string;

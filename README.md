@@ -20,7 +20,7 @@ grep "ERROR" /var/log/ci/*.log | tail -50
 **After AutoMind (AI-Powered):**
 ```typescript
 // 30 seconds to get insights
-const analysis = await FlowOpsAI.query(
+const analysis = await AutoMindAI.query(
   "Show me all failed CI builds from yesterday and tell me why they failed"
 );
 
@@ -31,7 +31,7 @@ const analysis = await FlowOpsAI.query(
 
 ### **Tangible Business Impact**
 
-| Metric | Before FlowOps | After FlowOps | Improvement |
+| Metric | Before AutoMind | After AutoMind | Improvement |
 |--------|---------------|---------------|-------------|
 | **Issue Resolution Time** | 45 minutes | 2 minutes | **95% faster** |
 | **Infrastructure Costs** | $5,000/month | $3,200/month | **36% reduction** |
@@ -252,8 +252,8 @@ automind/
 ### Development Setup
 ```bash
 # Clone and setup
-git clone https://github.com/sbusanelli/ScheduledBatch
-cd ScheduledBatch
+git clone https://github.com/sbusanelli/AutoMind
+cd AutoMind
 
 # Start infrastructure
 docker-compose up -d

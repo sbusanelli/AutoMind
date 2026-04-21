@@ -1,0 +1,617 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Custom styles for AutoMind Phoenix LiveView */
+
+/* Dashboard Layout */
+.dashboard-container {
+  @apply p-6 max-w-7xl mx-auto;
+}
+
+.dashboard-header {
+  @apply flex justify-between items-center mb-8;
+}
+
+.header-content h1 {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.header-content p {
+  @apply text-gray-600 mt-2;
+}
+
+.header-actions {
+  @apply flex gap-3;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8;
+}
+
+.metric-card {
+  @apply bg-white rounded-lg shadow-md p-6 border-l-4 transition-all hover:shadow-lg;
+}
+
+.metric-card--blue {
+  @apply border-blue-500;
+}
+
+.metric-card--purple {
+  @apply border-purple-500;
+}
+
+.metric-card--green {
+  @apply border-green-500;
+}
+
+.metric-card--emerald {
+  @apply border-emerald-500;
+}
+
+.metric-card__header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.metric-card__title {
+  @apply text-sm font-medium text-gray-600;
+}
+
+.metric-card__value {
+  @apply flex items-center justify-between;
+}
+
+.metric-card__value .text-2xl {
+  @apply font-bold text-gray-900;
+}
+
+.metric-card__trend {
+  @apply text-sm text-green-600 font-medium;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8;
+}
+
+/* Panels */
+.panel {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.panel--purple {
+  @apply border-l-4 border-purple-500;
+}
+
+.panel__header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.panel__header h2 {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.panel__content {
+  @apply space-y-4;
+}
+
+/* AI Insights */
+.insights-list {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.insights-list__header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.insights-list__header h2 {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.insights-count {
+  @apply text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full;
+}
+
+.insights-items {
+  @apply space-y-4 max-h-96 overflow-y-auto;
+}
+
+.insight-item {
+  @apply p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors;
+}
+
+.insight-item--selected {
+  @apply border-purple-500 bg-purple-50;
+}
+
+.insight-item__header {
+  @apply flex items-center justify-between mb-2;
+}
+
+.insight-type {
+  @apply text-xs font-medium px-2 py-1 rounded-full;
+}
+
+.insight-type--optimization {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.insight-type--prediction {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.insight-type--anomaly {
+  @apply bg-red-100 text-red-800;
+}
+
+.insight-type--compression {
+  @apply bg-green-100 text-green-800;
+}
+
+.insight-type--document_analysis {
+  @apply bg-purple-100 text-purple-800;
+}
+
+.insight-time {
+  @apply text-xs text-gray-500;
+}
+
+.insight-item__content h3 {
+  @apply font-semibold text-gray-900 mb-2;
+}
+
+.insight-item__content p {
+  @apply text-gray-700 text-sm;
+}
+
+.insight-metrics {
+  @apply flex gap-4 mt-2;
+}
+
+.metric {
+  @apply flex items-center gap-1 text-xs text-gray-600;
+}
+
+/* Insight Detail */
+.insight-detail {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.insight-detail__header {
+  @apply mb-6;
+}
+
+.insight-detail__header h2 {
+  @apply text-xl font-semibold text-gray-900 mb-2;
+}
+
+.insight-meta {
+  @apply flex items-center gap-4;
+}
+
+.insight-placeholder {
+  @apply text-center py-12;
+}
+
+.insight-placeholder svg {
+  @apply text-gray-400;
+}
+
+.insight-placeholder h3 {
+  @apply text-lg font-semibold text-gray-900 mt-4 mb-2;
+}
+
+.insight-placeholder p {
+  @apply text-gray-600;
+}
+
+.insight-actions {
+  @apply flex gap-3 mt-6;
+}
+
+/* Compression Details */
+.compression-details {
+  @apply mt-6 p-4 bg-gray-50 rounded-lg;
+}
+
+.compression-details h3 {
+  @apply text-lg font-semibold text-gray-900 mb-4;
+}
+
+.metrics-grid {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.metric-item {
+  @apply flex flex-col;
+}
+
+.metric-label {
+  @apply text-sm text-gray-600 mb-1;
+}
+
+.metric-value {
+  @apply font-semibold text-gray-900;
+}
+
+/* Operations Panel */
+.operations-grid {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.operation-item {
+  @apply flex items-center gap-4 p-4 bg-gray-50 rounded-lg;
+}
+
+.operation-item h3 {
+  @apply font-semibold text-gray-900;
+}
+
+.operation-item p {
+  @apply text-2xl font-bold text-gray-900 mb-1;
+}
+
+.operation-item .text-sm {
+  @apply text-gray-600;
+}
+
+/* Performance Panel */
+.performance-chart {
+  @apply mb-6;
+}
+
+.chart-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.chart-header h3 {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.chart-value {
+  @apply text-2xl font-bold text-purple-600;
+}
+
+.chart-bars {
+  @apply flex items-end gap-1 h-24;
+}
+
+.chart-bar {
+  @apply bg-purple-500 rounded-t transition-all;
+  min-height: 4px;
+}
+
+.chart-bar--active {
+  @apply bg-purple-700;
+}
+
+.performance-stats {
+  @apply grid grid-cols-3 gap-4;
+}
+
+.stat-item {
+  @apply text-center;
+}
+
+.stat-label {
+  @apply block text-sm text-gray-600 mb-1;
+}
+
+.stat-value {
+  @apply block text-lg font-bold text-gray-900;
+}
+
+/* System Health Panel */
+.health-indicators {
+  @apply space-y-3 mb-6;
+}
+
+.health-item {
+  @apply flex items-center gap-3;
+}
+
+.health-status {
+  @apply flex items-center;
+}
+
+.health-status--healthy {
+  @apply text-green-500;
+}
+
+.health-status--warning {
+  @apply text-yellow-500;
+}
+
+.health-status--error {
+  @apply text-red-500;
+}
+
+.health-info {
+  @apply flex-1;
+}
+
+.health-name {
+  @apply block text-sm font-medium text-gray-900;
+}
+
+.health-status-text {
+  @apply block text-xs text-gray-600;
+}
+
+.health-summary {
+  @apply border-t pt-4;
+}
+
+.summary-item {
+  @apply flex justify-between items-center mb-2;
+}
+
+.summary-label {
+  @apply text-sm text-gray-600;
+}
+
+.summary-value {
+  @apply text-sm font-medium;
+}
+
+.summary-value--healthy {
+  @apply text-green-600;
+}
+
+.summary-value--warning {
+  @apply text-yellow-600;
+}
+
+.summary-value--error {
+  @apply text-red-600;
+}
+
+/* Chat Widget */
+.chat-widget {
+  @apply fixed bottom-4 right-4 w-80 bg-white rounded-lg shadow-lg border border-gray-200;
+}
+
+.chat-header {
+  @apply flex items-center justify-between p-4 border-b border-gray-200 bg-purple-600 text-white rounded-t-lg;
+}
+
+.chat-header h3 {
+  @apply font-semibold;
+}
+
+.chat-content {
+  @apply max-h-96 flex flex-col;
+}
+
+.chat-messages {
+  @apply flex-1 p-4 space-y-3 overflow-y-auto max-h-64;
+}
+
+.message {
+  @apply p-3 rounded-lg max-w-xs;
+}
+
+.message--ai {
+  @apply bg-purple-100 text-purple-900;
+}
+
+.message--user {
+  @apply bg-blue-100 text-blue-900 ml-auto;
+}
+
+.chat-input {
+  @apply p-4 border-t border-gray-200;
+}
+
+.chat-input-field {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500;
+}
+
+.chat-send-btn {
+  @apply mt-2 bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors;
+}
+
+/* TurboQuant Dashboard */
+.turboquant-dashboard {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.dashboard-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.dashboard-header h2 {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.status-indicator {
+  @apply flex items-center gap-2 text-sm font-medium;
+}
+
+.status-indicator--green {
+  @apply text-green-600;
+}
+
+.test-section {
+  @apply mt-6 border-t pt-6;
+}
+
+.test-section h3 {
+  @apply text-lg font-semibold text-gray-900 mb-4;
+}
+
+.test-form {
+  @apply mb-6;
+}
+
+/* AI Insights Page */
+.ai-insights-container {
+  @apply p-6 max-w-7xl mx-auto;
+}
+
+.insights-layout {
+  @apply grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8;
+}
+
+.insights-list {
+  @apply lg:col-span-1;
+}
+
+.insight-detail {
+  @apply lg:col-span-2;
+}
+
+.turboquant-dashboard {
+  @apply mt-8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-header {
+    @apply flex-col items-start gap-4;
+  }
+  
+  .header-actions {
+    @apply w-full;
+  }
+  
+  .metrics-grid {
+    @apply grid-cols-1;
+  }
+  
+  .dashboard-grid {
+    @apply grid-cols-1;
+  }
+  
+  .operations-grid {
+    @apply grid-cols-1;
+  }
+  
+  .insights-layout {
+    @apply grid-cols-1;
+  }
+  
+  .chat-widget {
+    @apply fixed bottom-0 right-0 left-0 rounded-b-none rounded-t-lg;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbar Styling */
+.insights-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.insights-items::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.insights-items::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.insights-items::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Loading States */
+.loading {
+  @apply animate-pulse;
+}
+
+.loading-skeleton {
+  @apply bg-gray-200 rounded animate-pulse;
+}
+
+/* Focus States */
+button:focus,
+input:focus,
+textarea:focus {
+  @apply outline-none ring-2 ring-purple-500 ring-offset-2;
+}
+
+/* Hover States */
+.hover-lift {
+  @apply transition-transform hover:scale-105;
+}
+
+/* Custom Components */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge--success {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge--warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge--error {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge--info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md border border-gray-200;
+}
+
+.card__header {
+  @apply px-6 py-4 border-b border-gray-200;
+}
+
+.card__content {
+  @apply px-6 py-4;
+}
+
+.card__footer {
+  @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+}
+
+/* Utility Classes */
+.text-gradient {
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent;
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+}
+
+.border-gradient {
+  border-image: linear-gradient(to right, #9333ea, #3b82f6) 1;
+}

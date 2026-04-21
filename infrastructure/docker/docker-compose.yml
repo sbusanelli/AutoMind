@@ -46,13 +46,13 @@ services:
     build:
       context: ../../
       dockerfile: infrastructure/docker/Dockerfile.backend
-    container_name: scheduledbatch-backend
+    container_name: automind-backend
     environment:
       NODE_ENV: development
       PORT: 5000
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: scheduledbatch
+      DB_NAME: automind
       DB_USER: postgres
       DB_PASSWORD: ${DB_PASSWORD:-postgres123}
       REDIS_HOST: redis
@@ -132,5 +132,5 @@ volumes:
     driver: local
 
 networks:
-  scheduledbatch-network:
+  automind-network:
     driver: bridge
