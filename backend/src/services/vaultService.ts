@@ -43,13 +43,26 @@ export class VaultService {
       //   token: this.config.token
       // });
 
-      logger.info('Vault client initialized', { 
-        url: this.config.url,
-        namespace: this.config.namespace,
-        mount: this.config.mount
-      });
+      // Use console.log as fallback if logger is not available (test environment)
+      if (logger && typeof logger.info === 'function') {
+        logger.info('Vault client initialized', { 
+          url: this.config.url,
+          namespace: this.config.namespace,
+          mount: this.config.mount
+        });
+      } else {
+        console.log('Vault client initialized', { 
+          url: this.config.url,
+          namespace: this.config.namespace,
+          mount: this.config.mount
+        });
+      }
     } catch (error) {
-      logger.error('Failed to initialize Vault client:', error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error('Failed to initialize Vault client:', error);
+      } else {
+        console.error('Failed to initialize Vault client:', error);
+      }
       throw new Error('Vault initialization failed');
     }
   }
@@ -59,7 +72,9 @@ export class VaultService {
    */
   async readSecret(path: string): Promise<string> {
     try {
-      logger.debug(`Reading secret from Vault: ${path}`);
+      if (logger && typeof logger.debug === 'function') {
+        logger.debug(`Reading secret from Vault: ${path}`);
+      }
       
       // In real implementation:
       // const result: VaultResponse<{ value: string }> = await this.client.read(path);
@@ -73,11 +88,18 @@ export class VaultService {
         throw new Error(`Secret not found: ${path}`);
       }
       
-      logger.debug(`Successfully read secret: ${path}`);
+      if (logger && typeof logger.debug === 'function') {
+        logger.debug(`Successfully read secret: ${path}`);
+      }
       return value;
     } catch (error) {
-      logger.error(`Failed to read secret from Vault: ${path}`, error);
-      throw new Error(`Vault read failed: ${path}`);
+      if (logger && typeof logger.error === 'function') {
+        logger.error(`Failed to read secret from Vault: ${path}`, error);
+      } else {
+        console.error(`Failed to read secret from Vault: ${path}`, error);
+      }
+      // Re-throw the original error to preserve the error message
+      throw error;
     }
   }
 
@@ -86,14 +108,22 @@ export class VaultService {
    */
   async writeSecret(path: string, value: string, metadata?: Record<string, any>): Promise<void> {
     try {
-      logger.debug(`Writing secret to Vault: ${path}`);
+      if (logger && typeof logger.debug === 'function') {
+        logger.debug(`Writing secret to Vault: ${path}`);
+      }
       
       // In real implementation:
       // await this.client.write(path, { value, ...metadata });
       
-      logger.info(`Successfully wrote secret to Vault: ${path}`);
+      if (logger && typeof logger.info === 'function') {
+        logger.info(`Successfully wrote secret to Vault: ${path}`);
+      }
     } catch (error) {
-      logger.error(`Failed to write secret to Vault: ${path}`, error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error(`Failed to write secret to Vault: ${path}`, error);
+      } else {
+        console.error(`Failed to write secret to Vault: ${path}`, error);
+      }
       throw new Error(`Vault write failed: ${path}`);
     }
   }
@@ -108,7 +138,11 @@ export class VaultService {
       try {
         secrets[path] = await this.readSecret(path);
       } catch (error) {
-        logger.warn(`Failed to read secret ${path}, continuing...`, error);
+        if (logger && typeof logger.warn === 'function') {
+          logger.warn(`Failed to read secret ${path}, continuing...`, error);
+        } else {
+          console.warn(`Failed to read secret ${path}, continuing...`, error);
+        }
       }
     }
     
@@ -225,7 +259,11 @@ export class VaultService {
    */
   async rotateSecret(path: string, newValue: string): Promise<void> {
     try {
-      logger.info(`Rotating secret in Vault: ${path}`);
+      if (logger && typeof logger.info === 'function') {
+        logger.info(`Rotating secret in Vault: ${path}`);
+      } else {
+        console.log(`Rotating secret in Vault: ${path}`);
+      }
       
       // Read current value for backup
       const currentValue = await this.readSecret(path);
@@ -236,9 +274,17 @@ export class VaultService {
         previous_value_hash: this.hashValue(currentValue)
       });
       
-      logger.info(`Successfully rotated secret: ${path}`);
+      if (logger && typeof logger.info === 'function') {
+        logger.info(`Successfully rotated secret: ${path}`);
+      } else {
+        console.log(`Successfully rotated secret: ${path}`);
+      }
     } catch (error) {
-      logger.error(`Failed to rotate secret: ${path}`, error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error(`Failed to rotate secret: ${path}`, error);
+      } else {
+        console.error(`Failed to rotate secret: ${path}`, error);
+      }
       throw new Error(`Vault rotation failed: ${path}`);
     }
   }
@@ -269,14 +315,22 @@ export class VaultService {
         const daysSinceRotation = (now.getTime() - rotationDate.getTime()) / (1000 * 60 * 60 * 24);
         
         if (daysSinceRotation > maxAge) {
-          logger.warn(`Secret ${path} is ${daysSinceRotation} days old, triggering rotation`);
+          if (logger && typeof logger.warn === 'function') {
+            logger.warn(`Secret ${path} is ${daysSinceRotation} days old, triggering rotation`);
+          } else {
+            console.warn(`Secret ${path} is ${daysSinceRotation} days old, triggering rotation`);
+          }
           await this.triggerRotation(path);
         }
       }
       
       return await this.readSecret(path);
     } catch (error) {
-      logger.error(`Failed to get secret with rotation: ${path}`, error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error(`Failed to get secret with rotation: ${path}`, error);
+      } else {
+        console.error(`Failed to get secret with rotation: ${path}`, error);
+      }
       throw error;
     }
   }
@@ -293,7 +347,11 @@ export class VaultService {
       // For now, return empty metadata
       return {};
     } catch (error) {
-      logger.warn(`Failed to get metadata for ${path}:`, error);
+      if (logger && typeof logger.warn === 'function') {
+        logger.warn(`Failed to get metadata for ${path}:`, error);
+      } else {
+        console.warn(`Failed to get metadata for ${path}:`, error);
+      }
       return {};
     }
   }
@@ -303,15 +361,27 @@ export class VaultService {
    */
   private async triggerRotation(path: string): Promise<void> {
     try {
-      logger.info(`Triggering automatic rotation for: ${path}`);
+      if (logger && typeof logger.info === 'function') {
+        logger.info(`Triggering automatic rotation for: ${path}`);
+      } else {
+        console.log(`Triggering automatic rotation for: ${path}`);
+      }
       
       // In real implementation, this would trigger a rotation process
       // Could be a webhook call, message queue, or direct API call
       
       // For now, just log the rotation trigger
-      logger.info(`Rotation triggered for secret: ${path}`);
+      if (logger && typeof logger.info === 'function') {
+        logger.info(`Rotation triggered for secret: ${path}`);
+      } else {
+        console.log(`Rotation triggered for secret: ${path}`);
+      }
     } catch (error) {
-      logger.error(`Failed to trigger rotation for ${path}:`, error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error(`Failed to trigger rotation for ${path}:`, error);
+      } else {
+        console.error(`Failed to trigger rotation for ${path}:`, error);
+      }
     }
   }
 
@@ -374,9 +444,17 @@ export class VaultService {
       process.env.OPENAI_API_KEY = secrets['openai/api-key'];
       process.env.SLACK_WEBHOOK_URL = secrets['slack/webhook-url'];
       
-      logger.info('Environment initialized from Vault successfully');
+      if (logger && typeof logger.info === 'function') {
+        logger.info('Environment initialized from Vault successfully');
+      } else {
+        console.log('Environment initialized from Vault successfully');
+      }
     } catch (error) {
-      logger.error('Failed to initialize environment from Vault:', error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error('Failed to initialize environment from Vault:', error);
+      } else {
+        console.error('Failed to initialize environment from Vault:', error);
+      }
       throw new Error('Vault environment initialization failed');
     }
   }
@@ -393,7 +471,11 @@ export class VaultService {
       await this.readSecret('vault/health-check');
       return true;
     } catch (error) {
-      logger.error('Vault health check failed:', error);
+      if (logger && typeof logger.error === 'function') {
+        logger.error('Vault health check failed:', error);
+      } else {
+        console.error('Vault health check failed:', error);
+      }
       return false;
     }
   }

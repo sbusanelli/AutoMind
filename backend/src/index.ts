@@ -126,6 +126,14 @@ process.on('SIGINT', () => {
   });
 });
 
-startServer();
+// Function to create app without starting server (for testing)
+export function createApp() {
+  return app;
+}
+
+// Only start server if this file is run directly (not imported)
+if (require.main === module) {
+  startServer();
+}
 
 export { app, io };

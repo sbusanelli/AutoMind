@@ -283,7 +283,8 @@ describe('Workflow E2E Tests', () => {
         expect(aiResponse.status).toBe(200);
         
       } catch (error) {
-        throw new Error(`API integration test failed: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`API integration test failed: ${errorMessage}`);
       }
     }, 30000);
 
