@@ -33,7 +33,7 @@ module.exports = {
   testTimeout: 10000,
   verbose: true,
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/node_modules/$1'
   },
   testPathIgnorePatterns: [

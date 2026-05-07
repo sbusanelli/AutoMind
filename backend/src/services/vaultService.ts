@@ -27,10 +27,21 @@ export interface VaultResponse<T = any> {
 export class VaultService {
   private config: VaultConfig;
   private client: any; // This would be the Vault client
+  private isProduction: boolean;
 
   constructor(config: VaultConfig) {
     this.config = config;
-    this.initializeClient();
+    this.isProduction = process.env.NODE_ENV === 'production';
+    
+    if (this.isProduction) {
+      this.initializeClient();
+    } else {
+      if (logger && typeof logger.info === 'function') {
+        logger.info('Development mode: Skipping Vault initialization');
+      } else {
+        console.log('Development mode: Skipping Vault initialization');
+      }
+    }
   }
 
   private async initializeClient(): Promise<void> {
@@ -407,6 +418,16 @@ export class VaultService {
    * Initialize environment variables from Vault
    */
   async initializeEnvironment(): Promise<void> {
+    // Skip Vault initialization in development/test mode
+    if (!this.isProduction) {
+      if (logger && typeof logger.info === 'function') {
+        logger.info('Development mode: Using environment variables');
+      } else {
+        console.log('Development mode: Using environment variables');
+      }
+      return;
+    }
+    
     try {
       logger.info('Initializing environment from Vault...');
       

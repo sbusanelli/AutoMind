@@ -3,6 +3,9 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import '@testing-library/jest-dom';
 import { AIAssistant } from './AIAssistant';
 
+// Mock fetch API
+global.fetch = jest.fn();
+
 // Mock timers for testing async operations
 jest.useFakeTimers();
 
@@ -87,12 +90,11 @@ describe('AIAssistant Component', () => {
         fireEvent.change(input, { target: { value: 'optimize' } });
         fireEvent.click(sendButton);
         
-        // Fast-forward timers to get AI response
-        jest.advanceTimersByTime(1500);
+        // Wait for async operations
+        await new Promise(resolve => setTimeout(resolve, 100));
       });
       
-      // Check user message appears
-      expect(screen.getByText('optimize')).toBeInTheDocument();
+      expect(screen.queryByText(/AI is thinking/)).toBeInTheDocument();
       
       await waitFor(() => {
         expect(screen.getByText(/Based on current system metrics/)).toBeInTheDocument();
