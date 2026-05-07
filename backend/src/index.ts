@@ -11,6 +11,8 @@ import { authRoutes } from './routes/auth';
 import { jobRoutes } from './routes/jobs';
 import { aiRoutes } from './routes/ai';
 import { metricsRoutes } from './routes/metrics';
+import vectorRoutes from './routes/vector';
+import similarityRoutes from './routes/similarity';
 import { errorHandler } from './middleware/errorHandler';
 import { securityHeaders } from './middleware/security';
 import { logger } from './utils/logger';
@@ -18,6 +20,7 @@ import { connectDatabase } from './config/database';
 import { connectRedis } from './config/redis';
 import { startJobScheduler } from './jobs/scheduler';
 import { validateEnvironment } from './config/envValidation';
+import { VectorService } from './services/vectorService';
 
 // Load and validate environment variables
 dotenv.config();
@@ -77,6 +80,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/metrics', metricsRoutes);
+app.use('/api/vector', vectorRoutes);
+app.use('/api/similarity', similarityRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
@@ -98,6 +103,10 @@ async function startServer() {
     // Initialize database connections
     await connectDatabase();
     await connectRedis();
+    
+    // Initialize vector service
+    const vectorService = new VectorService();
+    await vectorService.initialize();
     
     // Start job scheduler
     startJobScheduler(io);
