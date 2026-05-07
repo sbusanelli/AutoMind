@@ -35,7 +35,7 @@ describe('Frontend Integration Tests', () => {
 
       // Test that the component renders without errors
       expect(screen.getByText('AI Insights')).toBeInTheDocument();
-      expect(screen.getByText('FlowOps AI Assistant')).toBeInTheDocument();
+      expect(screen.getByText('AutoMind AI Assistant')).toBeInTheDocument();
     });
 
     it('should handle API errors gracefully', async () => {
@@ -104,7 +104,7 @@ describe('Frontend Integration Tests', () => {
       render(<AIAssistant />);
 
       // Component should render without WebSocket errors
-      expect(screen.getByText('FlowOps AI Assistant')).toBeInTheDocument();
+      expect(screen.getByText('AutoMind AI Assistant')).toBeInTheDocument();
     });
 
     it('should handle WebSocket disconnections', () => {
@@ -121,7 +121,7 @@ describe('Frontend Integration Tests', () => {
       render(<AIAssistant />);
 
       // Should still work with closed WebSocket
-      expect(screen.getByText('FlowOps AI Assistant')).toBeInTheDocument();
+      expect(screen.getByText('AutoMind AI Assistant')).toBeInTheDocument();
     });
   });
 
@@ -187,7 +187,7 @@ describe('Frontend Integration Tests', () => {
       fireEvent.keyPress(input, { key: 'Enter', code: 'Enter' });
       
       // Should not crash
-      expect(screen.getByText('FlowOps AI Assistant')).toBeInTheDocument();
+      expect(screen.getByText('AutoMind AI Assistant')).toBeInTheDocument();
     });
 
     it('should have proper ARIA attributes', () => {

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, Brain, TrendingUp, AlertTriangle } from 'lucide-react';
+import { AIResponseRenderer } from './AIResponseRenderer';
+import { ProblemHistoryChart } from './ProblemHistoryChart';
 
 interface AIMessage {
   id: string;
@@ -23,36 +25,82 @@ export const AIAssistant: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [insights, setInsights] = useState<AIInsight[]>([]);
+  const [problemHistory, setProblemHistory] = useState<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Simulate AI insights
-    const mockInsights: AIInsight[] = [
-      {
-        type: 'performance',
-        title: 'System Efficiency',
-        description: 'Overall system performance',
-        value: 87,
-        trend: 'up',
-        severity: 'low'
-      },
-      {
-        type: 'prediction',
-        title: 'Job Failure Risk',
-        description: 'Predicted failures in next 24h',
-        value: 12,
-        severity: 'medium'
-      },
-      {
-        type: 'optimization',
-        title: 'Resource Utilization',
-        description: 'CPU and memory usage',
-        value: 73,
-        trend: 'stable',
-        severity: 'low'
+    // Fetch dynamic insights from backend
+    const fetchInsights = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/metrics/insights');
+        if (response.ok) {
+          const data = await response.json();
+          setInsights(data.insights);
+        }
+      } catch (error) {
+        console.error('Failed to fetch insights:', error);
+        // Fallback to mock data if API fails
+        const fallbackInsights: AIInsight[] = [
+          {
+            type: 'performance',
+            title: 'System Efficiency',
+            description: 'Overall system performance',
+            value: 85,
+            trend: 'stable',
+            severity: 'low'
+          },
+          {
+            type: 'prediction',
+            title: 'Job Failure Risk',
+            description: 'Predicted failures in next 24h',
+            value: 8,
+            severity: 'low'
+          },
+          {
+            type: 'optimization',
+            title: 'Resource Utilization',
+            description: 'CPU and memory usage',
+            value: 72,
+            trend: 'stable',
+            severity: 'low'
+          }
+        ];
+        setInsights(fallbackInsights);
       }
-    ];
-    setInsights(mockInsights);
+    };
+
+    // Fetch problem history
+    const fetchProblemHistory = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/metrics/problems/history');
+        if (response.ok) {
+          const data = await response.json();
+          setProblemHistory(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch problem history:', error);
+      }
+    };
+
+    fetchInsights();
+    fetchProblemHistory();
+    
+    // Refresh insights and problem history every 30 seconds
+    const interval = setInterval(() => {
+      fetchInsights();
+      fetchProblemHistory();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
+
+  const handleQuickAction = (prompt: string) => {
+    setInput(prompt);
+    // Focus the input field after setting the value
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -65,24 +113,49 @@ export const AIAssistant: React.FC = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageContent = input;
     setInput('');
     setIsTyping(true);
 
     try {
-      // Simulate AI response
-      setTimeout(() => {
-        const aiResponse: AIMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'assistant',
-          content: generateAIResponse(input),
-          timestamp: new Date().toISOString(),
-          suggestions: generateSuggestions(input)
-        };
+      // Make real API call to backend
+      const response = await fetch('http://localhost:5000/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageContent,
+          conversationId: 'default'
+        }),
+      });
 
-        setMessages(prev => [...prev, aiResponse]);
-        setIsTyping(false);
-      }, 1500);
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      
+      const aiResponse: AIMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: data.response,
+        timestamp: data.timestamp,
+        suggestions: data.suggestions
+      };
+
+      setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
+      console.error('Error calling AI API:', error);
+      // Fallback to mock response if API fails
+      const aiResponse: AIMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'I apologize, but I\'m having trouble connecting to the AI service. Please try again in a moment.',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, aiResponse]);
+    } finally {
       setIsTyping(false);
     }
   };
@@ -146,6 +219,16 @@ export const AIAssistant: React.FC = () => {
     <div className="flex h-full bg-white">
       {/* AI Insights Panel */}
       <div className="w-80 border-r border-gray-200 p-4">
+        {/* Problem History Chart */}
+        <div className="mb-6">
+          {problemHistory && (
+            <ProblemHistoryChart 
+              problems={problemHistory.problems} 
+              summary={problemHistory.summary} 
+            />
+          )}
+        </div>
+
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Insights</h3>
           
@@ -186,16 +269,28 @@ export const AIAssistant: React.FC = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-2">
-            <button className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+            <button 
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+              onClick={() => handleQuickAction('optimize job scheduling for better performance')}
+            >
               Optimize Schedule
             </button>
-            <button className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
+            <button 
+              className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+              onClick={() => handleQuickAction('analyze system performance and bottlenecks')}
+            >
               Analyze Performance
             </button>
-            <button className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
+            <button 
+              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium"
+              onClick={() => handleQuickAction('predict potential job failures and risks')}
+            >
               Predict Failures
             </button>
-            <button className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium">
+            <button 
+              className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
+              onClick={() => handleQuickAction('provide system insights and recommendations')}
+            >
               System Insights
             </button>
           </div>
@@ -208,7 +303,7 @@ export const AIAssistant: React.FC = () => {
           <div className="p-4 border-b bg-gray-50">
             <div className="flex items-center space-x-2">
               <Bot className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">FlowOps AI Assistant</h3>
+              <h3 className="text-lg font-semibold text-gray-900">AutoMind AI Assistant</h3>
             </div>
           </div>
 
@@ -219,12 +314,18 @@ export const AIAssistant: React.FC = () => {
                 key={message.id}
                 className={`mb-4 ${message.type === 'user' ? 'text-right' : 'text-left'}`}
               >
-                <div className={`inline-block max-w-xs px-4 py-2 rounded-lg ${
+                <div className={`inline-block max-w-lg px-4 py-2 rounded-lg ${
                   message.type === 'user' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-900'
                 }`}>
-                  <p className="text-sm">{message.content}</p>
+                  {message.type === 'user' ? (
+                    <p className="text-sm">{message.content}</p>
+                  ) : (
+                    <div className="text-sm">
+                      <AIResponseRenderer content={message.content} />
+                    </div>
+                  )}
                   {message.suggestions && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <p className="text-xs font-medium text-gray-600 mb-1">AI Suggestions:</p>
@@ -262,6 +363,7 @@ export const AIAssistant: React.FC = () => {
           <div className="p-4 border-t bg-gray-50">
             <div className="flex space-x-2">
               <input
+                ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

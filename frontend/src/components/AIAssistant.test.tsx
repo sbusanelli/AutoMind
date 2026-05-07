@@ -31,7 +31,7 @@ describe('AIAssistant Component', () => {
     it('should render chat interface', () => {
       render(<AIAssistant />);
       
-      expect(screen.getByText('FlowOps AI Assistant')).toBeInTheDocument();
+      expect(screen.getByText('AutoMind AI Assistant')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Ask AI about job optimization, performance, or scheduling...')).toBeInTheDocument();
     });
 

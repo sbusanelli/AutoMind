@@ -9,6 +9,8 @@ import dotenv from 'dotenv';
 
 import { authRoutes } from './routes/auth';
 import { jobRoutes } from './routes/jobs';
+import { aiRoutes } from './routes/ai';
+import { metricsRoutes } from './routes/metrics';
 import { errorHandler } from './middleware/errorHandler';
 import { securityHeaders } from './middleware/security';
 import { logger } from './utils/logger';
@@ -73,6 +75,8 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/metrics', metricsRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
