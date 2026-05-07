@@ -2,10 +2,10 @@
   "name": "automind-backend",
   "version": "1.0.0",
   "description": "AutoMind Backend - Autonomous AI operations system",
-  "main": "dist/simple-index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node dist/simple-index.js",
-    "dev": "nodemon src/simple-index.ts",
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -24,6 +24,7 @@
     "db:seed": "node dist/database/seed.js"
   },
   "dependencies": {
+    "@types/sqlite3": "^5.1.0",
     "bcrypt": "^6.0.0",
     "bull": "^4.11.0",
     "cors": "^2.8.0",
@@ -37,7 +38,10 @@
     "openai": "^4.20.0",
     "pg": "^8.11.0",
     "redis": "^4.6.0",
+    "redis-memory-server": "^0.16.1",
     "socket.io": "^4.7.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1",
     "typescript": "^5.2.2",
     "winston": "^3.11.0"
   },

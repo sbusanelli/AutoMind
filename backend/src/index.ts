@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { chmod } from 'fs/promises';
 import dotenv from 'dotenv';
 
 import { authRoutes } from './routes/auth';
@@ -14,9 +15,11 @@ import { logger } from './utils/logger';
 import { connectDatabase } from './config/database';
 import { connectRedis } from './config/redis';
 import { startJobScheduler } from './jobs/scheduler';
+import { validateEnvironment } from './config/envValidation';
 
-// Load environment variables
+// Load and validate environment variables
 dotenv.config();
+const config = validateEnvironment();
 
 const app = express();
 const server = createServer(app);
@@ -98,6 +101,7 @@ async function startServer() {
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info('Database and cache connections established');
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
